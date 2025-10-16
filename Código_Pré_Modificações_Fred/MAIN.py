@@ -63,7 +63,7 @@ MMs[3], rhos[3], deltas[3], Vs[3] = calcular_propriedades_resinas(T, correlaçã
 
 # ======================================================================================================================
 # PARTE 3 - CRIAÇÃO DA FUNÇÃO OBJETIVO PARA REGRESSÃO DOS PARÂMETROS
-# Este bloco será pulado caso o valor da variável tipo_cálculo_programa seja 'predicao'
+# Este bloco será pulado caso tipo_cálculo_programa == 'predicao'
 
 if tipo_cálculo_programa == 'regressao':
 
@@ -127,7 +127,7 @@ if tipo_cálculo_programa == 'regressao':
     
 # ===========================================================================================================================================================================================================================================
 # PARTE 4 - MINIMIZAÇÃO DA FUNÇÃO OBJETIVO PARA REGRESSÃO DOS PARÂMETROS
-# Este bloco será pulado caso o valor da variável tipo_cálculo_programa seja 'predicao'
+# Este bloco será pulado caso tipo_cálculo_programa == 'predicao'
 
 if tipo_cálculo_programa == 'regressao':
 
