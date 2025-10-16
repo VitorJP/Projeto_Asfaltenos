@@ -127,7 +127,7 @@ if tipo_cálculo_programa == 'regressao':
     
 # ===========================================================================================================================================================================================================================================
 # PARTE 4 - MINIMIZAÇÃO DA FUNÇÃO OBJETIVO PARA REGRESSÃO DOS PARÂMETROS
-# Este bloco será pulado caso tipo_cálculo_programa == 'predicao'
+# Este bloco é pulado caso tipo_cálculo_programa == 'predicao'
 
 if tipo_cálculo_programa == 'regressao':
 
