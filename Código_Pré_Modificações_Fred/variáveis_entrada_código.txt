@@ -1,0 +1,163 @@
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+*                                                                                                                   *
+*                                             Notas importantes:                                                    *
+*                                            ===================                                                    *
+*                                                                                                                   *
+*  O módulo 'MAIN.PY' é o programa principal.                                                                       *
+*  Praticamente todos cálculos executados no 'MAIN.PY' utilizam funções presentes em módulos auxiliares.            *
+*  Os módulos auxiliares foram organizados de modo a agrupar funções de propósito similar.                          *
+*  Ao final alguns módulos auxiliares, pode haver um código que testa se ele está funcionando corretamente.         *
+*  Quando presente, o código de teste de um módulo auxiliar é executado apenas quando ele é o script principal.     *
+*  Em outras palavras, quando o módulo auxiliar é importado pelo 'MAIN.py', os códigos de teste não são executados, *
+*  por que isso tornaria o funcionamento do programa principal mais lento.                                          *
+*                                                                                                                   *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+============================================
+ALIMENTAÇÃO DO 'MÓDULO_MAIN.PY'
+============================================
+
+Descrição:
+----------
+A seguir, são apresentadas as variáveis a serem lidas pelo programa principal:
+
++------------------------------+---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Bloco de código              | Variável                        | Significado                                                                                                                                            |
++------------------------------+---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                              | n_agregados                     | nº de agregados de asfaltenos                                                                                                                          |
+|                              +---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                              | MWmin                           | massa molar do monômero (g/mol)                                                                                                                        |
+|                              +---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                              | MWmax                           | massa molar máxima possível para um agregado de asfalteno (g/mol)                                                                                      |		
+|                              +---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                              | alfa                            | parâmetro de forma da função densidade de probabilidade da distribuição Gamma (FDP_Gamma)                                                              |
+|                              |                                 | Obs: Equivale ao parâmetro 'beta' presente na pg. 75 da tese de Asok Kumar Tharanivasan (2012)                                                         |
+|                              +---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                              | MWavg                           | massa molar média dos agregados de asfaltenos (g/mol)                                                                                                  |
+| Distribuição de massa molar  |                                 | Obs: esta variável é utilizada no cálculo do parâmetro de escala da FDP_Gamma                                                                          |
+|                              +---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                              | tipo_cálculo_MM_agregados       | tipo de cálculo para a determinação das massas molares dos agregados de asfaltenos                                                                     |
+|                              |                                 | opções: (medio) valor médio de cada faixa de massa molar                                                                                               |
+|                              |                                 |         (superior) limite superior de cada faixa de massa molar                                                                                        |
+|                              |                                 | Obs: a opção 'medio' é utilizada na tese de Asok Kumar Tharanivasan (2012)                                                                             |
+|                              |                                 |      a opção 'superior' é utilizada na dissertação de José Francisco Romero Yanes (2018)                                                               |
+|                              +---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                              | método_integração_FDP_Gamma     | método numérico para as integrações numéricas envolvendo a FDP_Gamma                                                                                   |
+|                              |                                 | opções: (quadratura) quadratura adaptativa baseada na fórmula de Gauss-Kronrod                                                                         |
+|                              |                                 |         (trapezios) regra dos trapézios generalizada                                                                                                   |
++------------------------------+---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                              | correlação_densidade_saturados  | correlação para o cálculo da densidade dos saturados                                                                                                   |
+|                              |                                 | opções: (Caiua)                                                                                                                                        |
+|                              |                                 |         (Akbarzadeh)                                                                                                                                   |
+|                              |                                 |         (Yanes)                                                                                                                                        |
+|                              |                                 | Obs: a opção 'Caiua' é a correlação presente na pg. 6923 do artigo de Caiuã Araújo Alves (2019)                                                        |
+|                              |                                 |      a opção 'Akbarzadeh' é a correlação presente na pg. 77 da tese de Asok Kumar Tharanivasan (2012)                                                  |
+|                              |                                 |      a opção 'Yanes' lê o valor da pg. 39 da dissertação de José Francisco Romero Yanes (2018), o qual é válido apenas para 25 ºC                      |
+| Propriedades dos saturados   +---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+                               
+|                              | correlação_delta_saturados      | correlação para o cálculo dos parâmetros de solubilidade dos saturados                                                                                 |
+|                              |                                 | opções: (Akbarzadeh)                                                                                                                                   |
+|                              |                                 |         (Tharanivasan)                                                                                                                                 |
+|                              |                                 |         (Yanes)                                                                                                                                        |
+|                              |                                 | Obs: a opção 'Akbarzadeh' é a primeira correlação presente na pg. 78 da tese de Asok Kumar Tharanivasan (2012)                                         |
+|                              |                                 |      a opção 'Tharanivasan' é a segunda correlação presente na pg. 78 da tese de Asok Kumar Tharanivasan (2012)                                        |
+|                              |                                 |      a opção 'Yanes' lê o valor da pg. 39 da dissertação de José Francisco Romero Yanes (2018), o qual é válido apenas para 25 ºC                      |
++------------------------------+---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                              | correlação_densidade_aromáticos | correlação para o cálculo da densidade dos aromáticos                                                                                                  |
+|                              |                                 | opções: (Caiua)                                                                                                                                        |
+|                              |                                 |         (Akbarzadeh)                                                                                                                                   |
+|                              |                                 |         (Yanes)                                                                                                                                        |
+|                              |                                 | Obs: a opção 'Caiua' é a correlação presente na pg. 6924 do artigo de Caiuã Araújo Alves (2019)                                                        |
+|                              |                                 |      a opção 'Akbarzadeh' é a correlação presente na pg. 77 da tese de Asok Kumar Tharanivasan (2012)                                                  |
+| Propriedades dos aromáticos  |                                 |      a opção 'Yanes' lê o valor da pg. 39 da dissertação de José Francisco Romero Yanes (2018), o qual é válido apenas para 25 ºC                      |
+|                              +---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+                                
+|                              | correlação_delta_aromáticos     | correlação para o cálculo dos parâmetros de solubilidade dos aromáticos                                                                                |
+|                              |                                 | opções: (Akbarzadeh)                                                                                                                                   |
+|                              |                                 |         (Yanes)                                                                                                                                        |
+|                              |                                 | Obs: a opção 'Akbarzadeh' é a correlação presente na pg. 78 da tese de Asok Kumar Tharanivasan (2012)                                                  |
+|                              |                                 |      a opção 'Yanes' lê o valor da pg. 39 da dissertação de José Francisco Romero Yanes (2018), o qual é válido apenas para 25 ºC                      |
++------------------------------+---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                              | correlação_densidade_resinas	 | correlação para o cálculo da densidade das resinas                                                                                                     |
+|                              |                                 | opções: (Yanes)                                                                                                                                        |
+|                              |                                 | Obs: a opção 'Yanes' lê o valor da pg. 39 da dissertação de José Francisco Romero Yanes (2018)                                                         |
+|                              |                                 |      embora seja comum assumir que a densidade das resinas independa da temperatura, deixei o código assim para facilitar flexibilizações futuras      |
+| Propriedades das resinas     +---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+                               
+|                              | correlação_delta_resinas    	 | correlação para o cálculo dos parâmetros de solubilidade das resinas                                                                                   |
+|                              |                                 | opções: (Yanes)                                                                                                                                        |
+|                              |                                 | Obs: a opção 'Yanes' lê o valor da pg. 39 da dissertação de José Francisco Romero Yanes (2018)                                                         |
+|                              |                                 |      embora seja comum assumir que o delta das resinas independa da temperatura, deixei o código assim para facilitar flexibilizações futuras          |
++------------------------------+---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                              | correlação_densidade_agregados  | correlação para o cálculo da densidade dos agregados de asfaltenos                                                                                     |
+|                              |                                 | opções: (Alboudwarej)                                                                                                                                  |
+|                              |                                 |         (Barrera)                                                                                                                                      |
+|                              |                                 | Obs: a opção 'Alboudwarej' é a correlação presente na pg. 75 da tese de Asok Kumar Tharanivasan (2012)                                                 |
+|                              |                                 |      a opção 'Barrera' é a correlação presente na pg. 39 da dissertação de José Francisco Romero Yanes (2018)                                          |
+|                              +---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+                               
+|                              | correlação_delta_agregados      | correlação para o cálculo dos parâmetros de solubilidade dos agregados de asfaltenos                                                                   |
+|                              |                                 | opções: (Barrera)                                                                                                                                      |
+|                              |                                 |         (Tharanivasan)                                                                                                                                 |
+| Propriedades dos agregados   |                                 | Obs: a opção 'Barrera' é a correlação presente nas pgs. 52 a 53 e 82 a 87 da tese de Diana Maria Barrera (2012)                                        |
+|                              |                                 |      a opção 'Tharanivasan' é a correlação presente na pg. 76 da tese de Asok Kumar Tharanivasan (2012)                                                |
+|                              +---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                              | Alinha_delta_agregados          | valor do parâmetro A' sugerido por Barrera para o cálculo dos parâmetros de solubilidade dos agregados de asfaltenos                                   |
+|                              |                                 | Obs: esta variável é útil apenas se 'correlação_delta_agregados' = 'Barrera'                                                                           |
+|                              +---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+                                
+|                              | c_delta_agregados               | valor do parâmetro c sugerido por Barrera para o cálculo dos parâmetros de solubilidade dos agregados de asfaltenos                                    |
+|                              |                                 | Obs: esta variável é útil apenas se 'correlação_delta_agregados' = 'Barrera'                                                                           |
+|                              +---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                              | d_delta_agregados               | valor do parâmetro d para o cálculo dos parâmetros de solubilidade dos agregados de asfaltenos                                                         |
+|                              |                                 | Obs: esta variável é útil apenas se 'correlação_delta_agregados' = 'Barrera'                                                                           |
++------------------------------+---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                              | tipo_cálculo_programa           | tipo de cálculo a ser executado pelo programa principal                                                                                                |
+|                              |                                 | opções: (predicao) Utiliza os parâmetros lidos neste arquivo (ver próxima variável: 'tipo_regressão') sem estimá-los.                                  |
+|                              |                                 |         (regressao) Utiliza os parâmetros lidos neste arquivo (ver próxima variável:'tipo_regressão') como chutes para os valores a serem estimados    |
+|                              +---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+ 
+|                              | tipo_regressão                  | define quais parâmetros serão regredidos pelo programa principal                                                                                       |
+| Tomadas de decisão no MAIN   |                                 | opções: (1) MWavg                                                                                                                                      |
+|                              |                                 |         (2) MWavg, alfa                                                                                                                                |
+|                              |                                 |         (3) MWavg, alfa, c_delta_agregados                                                                                                             |
+|                              |                                 |         (4) MWavg, alfa, c_delta_agregados, Alinha_delta_agregados                                                                                     |
+|                              |                                 |         (5) MWavg, alfa, c_delta_agregados, Alinha_delta_agregados, d_delta_agregados                                                                  |
+|                              |                                 | Obs: esta variável é útil apenas se 'tipo_cálculo_programa' = 'regressao'                                                                              |
++------------------------------+---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                              | algoritmo_otimização            | algoritmo numérico de regressão dos parâmetros                                                                                                         |
+|                              |                                 | opções: (1) Nelder-Mead                                                                                                                                |
+|                              |                                 |         (2) Brute-force com resultado servindo de chute inicial para Nelder-Mead                                                                       |
+| Regressão dos parâmetros     |                                 |         (3) L-BFGS-B                                                                                                                                   |
+|                              |                                 |         (4) Powell                                                                                                                                     |
+|                              |                                 | Obs: esta variável é útil apenas se 'tipo_cálculo_programa' = 'regressao'                                                                              |		
+|                              |                                 |      as opções 3 e 4 recebem limites nos valores das variáveis, os quais devem ser configurados diretamente no módulo 'MAIN.py'                        |
++------------------------------+---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Sistema a ser estudado       | nome_planilha                   | título da planilha que contém os dados experimentais a serem preditos ou regredidos                                                                    |
+|                              |                                 | Obs: deve seguir a mesma sintaxe presente no arquivo 'dados_experimentais.xlsx'                                                                        |
++------------------------------+---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+Valores:
+--------
+Os valores das variáveis, na ordem em que aparecem acima, são:
+
++------------------------------+---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Valor                        |                                 |                                                                                                                                                        |
++------------------------------+---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
+30
+1800
+30000
+3.5
+3620.0
+medio
+trapezios
+Akbarzadeh
+Tharanivasan
+Akbarzadeh
+Akbarzadeh
+Yanes
+Yanes
+Alboudwarej
+Tharanivasan
+0
+0.647
+0.0495
+predicao
+2
+1
+Tharanivasan_Lloydminster2
++------------------------------+---------------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------+
