@@ -14,28 +14,34 @@ def calcular_propriedades_solvente(T, solvente):
            V (float)     : volume molar (m³/mol) 
 
     Observações:
-        Os parâmetros do modelo HBT para cada solvente foram extraídos do livro 'The Properties of Gases and Liquids', de Reid, Prausnitz e Poling (1987)
-        As correlações para 'delta' foram originalmente propostas por Akbarzadeh et al. (2005), conforme citado por Tharanivasan (2012)
+        Os parâmetros do modelo HBT para cada solvente foram extraídos do livro 'The Properties of Gases and Liquids',
+        de Reid, Prausnitz e Poling (1987)
+        As correlações para 'delta' foram originalmente propostas por Akbarzadeh et al. (2005),
+        conforme citado por Tharanivasan (2012)
     """    
     
     # Propriedades
     match solvente:
         case "n-heptano":
-            MM = 100 # g/mol
-            rho = calcular_densidadehbt(T, MM, 540.26, 0.3507, 0.4304) # kg/m³
-            delta = 15.2 - 0.0232*(T - 298.15) # MPa**0.5 
-    
+            MM = 100  # g/mol
+            rho_solvente = calcular_densidadehbt(T, MM, 540.26, 0.3507, 0.4304)  # kg/m³
+            delta = 15.2 - 0.0232*(T - 298.15)  # MPa**0.5
         case "n-pentano":
-            MM = 72 # g/mol
-            rho = calcular_densidadehbt(T, MM, 469.65, 0.2522, 0.3113) # kg/m³
-            delta = 14.3 - 0.0232*(T - 298.15) # MPa**0.5 
-    
-    # Ajuste de unidades
-    MM = MM*1e-3 # kg/mol
-    delta = delta*1e3 # Pa**0.5
-    V = MM/rho # m³/mol      
+            MM = 72  # g/mol
+            rho_solvente = calcular_densidadehbt(T, MM, 469.65, 0.2522, 0.3113)  # kg/m³
+            delta = 14.3 - 0.0232*(T - 298.15)  # MPa**0.5
+        case _:  # Em caso de erro, usa-se n-heptano como padrão.
+            MM = 100  # g/mol
+            rho_solvente = calcular_densidadehbt(T, MM, 540.26, 0.3507, 0.4304)  # kg/m³
+            delta = 15.2 - 0.0232 * (T - 298.15)  # MPa**0.5
 
-    return MM, rho, delta, V
+    # Ajuste de unidades
+    MM = MM*1e-3  # kg/mol
+    delta = delta*1e3  # Pa**0.5
+    V_solvente = MM/rho_solvente  # m³/mol
+
+    return MM, rho_solvente, delta, V_solvente
+
 
 # Função 
 def calcular_densidadehbt(T, MM, Tc, wSRK, Vstar):
@@ -52,14 +58,15 @@ def calcular_densidadehbt(T, MM, Tc, wSRK, Vstar):
         rho (float): Densidade (kg/m³) 
 
     Observações:
-        A implementação foi baseada no equacionamento do livro 'The Properties of Gases and Liquids', de Reid, Prausnitz e Poling (1987)
+        A implementação foi baseada no equacionamento do livro 'The Properties of Gases and Liquids',
+        de Reid, Prausnitz e Poling (1987)
     """
     
     # Variáveis auxiliares
     Tr = T / Tc
     aux = 1 - Tr
-    MM = MM*1e-3 # kg/mol
-    Vstar = Vstar*1e-3 # m³/mol
+    MM = MM*1e-3  # kg/mol
+    Vstar = Vstar*1e-3  # m³/mol
 
     # Cálculos
     a, b = -1.52816, 1.43907
@@ -69,14 +76,15 @@ def calcular_densidadehbt(T, MM, Tc, wSRK, Vstar):
     Vr0 = 1 + a*aux**(1/3) + b*aux**(2/3) + c*aux + d*aux**(4/3)
     Vr1 = (e + f*Tr + g*Tr**2 + h*Tr**3)/(Tr - 1.00001)
     Vs = Vstar*(Vr0*(1 - wSRK*Vr1))
-    rho = MM/Vs
+    rho_solvente = MM/Vs
 
-    return rho
+    return rho_solvente
 
-# ********************************************************************************************************************************************************************************* #
-#  ATENÇÃO: O CÓDIGO A SEGUIR SERÁ EXECUTADO APENAS QUANDO ESTE MÓDULO FOR RODADO COMO SCRIPT PRINCIPAL.                                                                            #
-#           O CÓDIGO A SEGUIR SERVE PARA CONFERIR SE AS FUNÇÕES DESTE MÓDULO FUNCIONAM CORRETAMENTE.                                                                                #
-# ********************************************************************************************************************************************************************************* #
+
+# ******************************************************************************************************************** #
+#  ATENÇÃO: O CÓDIGO A SEGUIR SERÁ EXECUTADO APENAS QUANDO ESTE MÓDULO FOR RODADO COMO SCRIPT PRINCIPAL.               #
+#           O CÓDIGO A SEGUIR SERVE PARA CONFERIR SE AS FUNÇÕES DESTE MÓDULO FUNCIONAM CORRETAMENTE.                   #
+# ******************************************************************************************************************** #
 # INÍCIO DO TESTE
 # OBS: GABARITO EXTRAÍDO DA PG. 68 DO LIVRO 'THE PROPERTIES OF GASES AND LIQUIDS', DE REID, PRAUSNITZ E POLING (1987)
 if __name__ == "__main__":
@@ -84,10 +92,12 @@ if __name__ == "__main__":
     # Função 'calcular_densidadehbt'
     rho = calcular_densidadehbt(310.93, 58.12, 408.14, 0.1825, 0.2568)
     V = 58.12*1e-3/rho
-    print("\n|----------------------------------------------------------------------------------------------------------------------------------|")
+    print("\n|---------------------------------------------------------------------------------------------------------"
+          "-------------------------|")
     print("| TESTE DA FUNCAO 'calcular_densidadehbt'")
     print(f"| Volume molar calculado: {V*1e6} cm3/mol")
     print(f"| Volume molar gabarito: {108.9} cm3/mol")
-    print("|----------------------------------------------------------------------------------------------------------------------------------|")
+    print("|-----------------------------------------------------------------------------------------------------------"
+          "-----------------------|")
 # FIM DO TESTE
-# ********************************************************************************************************************************************************************************* #
+# ******************************************************************************************************************** #

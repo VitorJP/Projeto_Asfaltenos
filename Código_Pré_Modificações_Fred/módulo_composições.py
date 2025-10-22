@@ -1,6 +1,7 @@
 # Importação de bibliotecas do python
 import numpy as np
 
+
 # Função 
 def normalizar_composição(frações):
     """ Normaliza as frações de modo que a soma delas seja 1.0.
@@ -17,6 +18,7 @@ def normalizar_composição(frações):
 
     return frações_normalizadas
 
+
 # Função
 def fracionar_composição_global(ws_simplificados, SARA, wsagregados, MMs):
     """ Fragmenta a composição do sistema de [Solvente, Petróleo] para [Solvente, S, A, R, Asf0, Asf1, ...] 
@@ -29,8 +31,10 @@ def fracionar_composição_global(ws_simplificados, SARA, wsagregados, MMs):
 
     Outputs:
         Uma tupla contendo os seguintes elementos:
-            ws_completo (array) : composição global do sistema em termos de [Solvente, S, A, R, Asf0, Asf1, ...] (base mássica)         
-            xs_completo (array) : composição global do sistema em termos de [Solvente, S, A, R, Asf0, Asf1, ...] (base molar)     
+            ws_completo (array) : composição global do sistema em termos de
+                                  [Solvente, S, A, R, Asf0, Asf1, ...] (base mássica)
+            xs_completo (array) : composição global do sistema em termos de
+                                  [Solvente, S, A, R, Asf0, Asf1, ...] (base molar)
     """
 
     # Inicialização de arrays importantes
@@ -49,14 +53,15 @@ def fracionar_composição_global(ws_simplificados, SARA, wsagregados, MMs):
 
     # Composição dos sistemas em termos de [Solvente, S, A, R, Asf0, Asf1, ...] (base molar)
     xs_completo = ws_completo/MMs  
-    xs_completo = xs_completo/xs_completo.sum(axis = 1, keepdims = True)
+    xs_completo = xs_completo/xs_completo.sum(axis=1, keepdims=True)
 
     return ws_completo, xs_completo
 
-# ********************************************************************************************************************************************************************************* #
-#  ATENÇÃO: O CÓDIGO A SEGUIR SERÁ EXECUTADO APENAS QUANDO ESTE MÓDULO FOR RODADO COMO SCRIPT PRINCIPAL.                                                                            #
-#           O CÓDIGO A SEGUIR SERVE PARA CONFERIR SE AS FUNÇÕES DESTE MÓDULO FUNCIONAM CORRETAMENTE.                                                                                #
-# ********************************************************************************************************************************************************************************* #
+
+# ******************************************************************************************************************** #
+#  ATENÇÃO: O CÓDIGO A SEGUIR SERÁ EXECUTADO APENAS QUANDO ESTE MÓDULO FOR RODADO COMO SCRIPT PRINCIPAL.               #
+#           O CÓDIGO A SEGUIR SERVE PARA CONFERIR SE AS FUNÇÕES DESTE MÓDULO FUNCIONAM CORRETAMENTE.                   #
+# ******************************************************************************************************************** #
 # INÍCIO DO TESTE
 # OBS: GABARITO EXTRAÍDO DA PG. 105 DA DISSERTAÇÃO DE YANES (2018)
 if __name__ == "__main__":
@@ -65,10 +70,10 @@ if __name__ == "__main__":
     sara_crua = np.array([0.32, 0.27, 0.35, 0.0634])
     sara_normalizada = normalizar_composição(sara_crua)
     sara_gabarito = np.array([0.3172630549, 0.2721509606, 0.3471670852, 0.06341889918])
-    print("\n|----------------------------------------------------------------------------------------------------------------------------------|")
+    print("\n|", 119*"-")
     print("| TESTE DA FUNCAO 'normalizar_composição'")
     print(f"| SARA calculada: {sara_normalizada}")
     print(f"| SARA gabarito: {sara_gabarito}")
-    print("|----------------------------------------------------------------------------------------------------------------------------------|")
+    print("|", 119*"-")
 # FIM DO TESTE
-# ********************************************************************************************************************************************************************************* #
+# ******************************************************************************************************************** #

@@ -20,34 +20,27 @@ def calcular_propriedades_saturados(T, correlação_densidade_saturados, correla
 
     # Densidade (kg/m³)
     match correlação_densidade_saturados:
-        case "Caiua":
-            rho = 1069.54 - 0.6379*T
-
-        case "Akbarzadeh":
-            rho = 1078.96 - 0.6379*T 
-
-        case "Yanes":
-            rho = 880.0
+        case "Caiua": rho = 1069.54 - 0.6379*T
+        case "Akbarzadeh": rho = 1078.96 - 0.6379*T
+        case "Yanes": rho = 880.0
+        case _: rho = 1078.96 - 0.6379*T  # Em caso de erro, usa-se Akbarzadeh como padrão.
 
     # Parâmetro de solubilidade (MPa**0.5)
     match correlação_delta_saturados:
-        case "Akbarzadeh":
-            delta = 22.381 - 0.0222*T
-            
-        case "Tharanivasan":
-            delta = 23.021 - 0.0222*T
-
-        case "Yanes":
-            delta = 16.4
+        case "Akbarzadeh": delta = 22.381 - 0.0222*T
+        case "Tharanivasan": delta = 23.021 - 0.0222*T
+        case "Yanes": delta = 16.4
+        case _: delta = 22.381 - 0.0222*T  # Em caso de erro, usa-se Akbarzadeh como padrão.
 
     # Ajuste de unidades
-    MM = MM*1e-3 # kg/mol
-    delta = delta*1e3 # Pa**0.5
+    MM = MM*1e-3  # kg/mol
+    delta = delta*1e3  # Pa**0.5
 
     # Volume molar (m³/mol)
     V = MM/rho 
 
     return MM, rho, delta, V
+
 
 # Função
 def calcular_propriedades_aromáticos(T, correlação_densidade_aromáticos, correlação_delta_aromáticos):
@@ -56,7 +49,8 @@ def calcular_propriedades_aromáticos(T, correlação_densidade_aromáticos, cor
     Inputs:
         T (float)                                : temperatura (K)
         correlação_densidade_aromáticos (string) : correlação para o cálculo da densidade dos aromáticos
-        correlação_delta_aromáticos (string)     : correlação para o cálculo dos parâmetros de solubilidade dos aromáticos
+        correlação_delta_aromáticos (string)     : correlação para o cálculo dos parâmetros de solubilidade
+                                                   dos aromáticos
     
     Outputs:
         Uma tupla contendo os seguintes elementos:
@@ -71,31 +65,26 @@ def calcular_propriedades_aromáticos(T, correlação_densidade_aromáticos, cor
 
     # Densidade (kg/m³)
     match correlação_densidade_aromáticos:
-        case "Caiua":
-            rho = 1164.73 - 0.5942*T
-
-        case "Akbarzadeh":
-            rho = 1184.47 - 0.5942*T
-
-        case "Yanes":
-            rho = 990.0
+        case "Caiua": rho = 1164.73 - 0.5942*T
+        case "Akbarzadeh": rho = 1184.47 - 0.5942*T
+        case "Yanes": rho = 990.0
+        case _: rho = 1184.47 - 0.5942*T  # Em caso de erro, usa-se Akbarzadeh como padrão.
 
     # Parâmetro de solubilidade (MPa**0.5)
     match correlação_delta_aromáticos:
-        case "Akbarzadeh":
-            delta = 26.333 - 0.0204*T
-
-        case "Yanes":
-            delta = 20.3
+        case "Akbarzadeh": delta = 26.333 - 0.0204*T
+        case "Yanes": delta = 20.3
+        case _: delta = 26.333 - 0.0204*T  # Em caso de erro, usa-se Akbarzadeh como padrão.
 
     # Ajuste de unidades
-    MM = MM*1e-3 # kg/mol
-    delta = delta*1e3 # Pa**0.5
+    MM = MM*1e-3  # kg/mol
+    delta = delta*1e3  # Pa**0.5
 
     # Volume molar (m³/mol)
     V = MM/rho 
 
     return MM, rho, delta, V
+
 
 # Função
 def calcular_propriedades_resinas(T, correlação_densidade_resinas, correlação_delta_resinas):
@@ -119,17 +108,17 @@ def calcular_propriedades_resinas(T, correlação_densidade_resinas, correlaçã
 
     # Densidade (kg/m³)
     match correlação_densidade_resinas:
-        case "Yanes":
-            rho = 1044.0
+        case "Yanes": rho = 1044.0
+        case _: rho = 1044.0  # Em caso de erro, usa-se Yanes como padrão.
 
     # Parâmetro de solubilidade (MPa**0.5)
     match correlação_delta_resinas:
-        case "Yanes":
-            delta = 19.3
+        case "Yanes": delta = 19.3
+        case _: delta = 19.3  # Em caso de erro, usa-se Yanes como padrão.
 
     # Ajuste de unidades
-    MM = MM*1e-3 # kg/mol
-    delta = delta*1e3 # Pa**0.5
+    MM = MM*1e-3  # kg/mol
+    delta = delta*1e3  # Pa**0.5
 
     # Volume molar (m³/mol)
     V = MM/rho 
