@@ -64,8 +64,11 @@ def ler_variáveis_entrada_código(diretório):
     # Armazenamento apenas das linhas que contém os valores das variáveis a serem lidas pelo programa principal
     linhas_úteis = linhas[-23:-1]
 
+    # Removendo o nome da varíavel da linha
+    linhas_úteis_valores = [linha.split(":", 1)[1] if ":" in linha else linha for linha in linhas_úteis]
+
     # Removendo os espaços em branco dos elementos de 'linhas_úteis'
-    linhas_úteis_limpas = [linha.strip() for linha in linhas_úteis]
+    linhas_úteis_limpas = [linha.strip() for linha in linhas_úteis_valores]
 
     # Alocação de variáveis  
     n_agregados = int(linhas_úteis_limpas[0])
@@ -98,8 +101,7 @@ def ler_variáveis_entrada_código(diretório):
         correlação_densidade_resinas, correlação_delta_resinas,
         correlação_densidade_agregados, correlação_delta_agregados, 
         Alinha_delta_agregados, c_delta_agregados, d_delta_agregados,
-        tipo_cálculo_programa, tipo_regressão,
-        algoritmo_otimização,
+        tipo_cálculo_programa, tipo_regressão, algoritmo_otimização,
         nome_planilha
         )
 
@@ -155,19 +157,19 @@ if __name__ == "__main__":
     # Função 'ler_variáveis_entrada_codigo'
     diretório = "variáveis_entrada_código.txt"
     saída_da_função = ler_variáveis_entrada_código(diretório)
+    variáveis_entrada = ["n_agregados", "MWmin", "MWmax", "alfa", "MWavg",
+                         "tipo_cálculo_MM_agregados", "método_integração_FDP_Gamma",
+                         "correlação_densidade_saturados", "correlação_delta_saturados",
+                         "correlação_densidade_aromáticos", "correlação_delta_aromáticos",
+                         "correlação_densidade_resinas", "correlação_delta_resinas",
+                         "correlação_densidade_agregados", "correlação_delta_agregados",
+                         "Alinha_delta_agregados", "c_delta_agregados", "d_delta_agregados",
+                         "tipo_cálculo_programa", "tipo_regressão", "algoritmo_otimização", "nome_planilha"]
     print("\n|---------------------------------------------------------------------------------------------------------"
           "---------------------------------------------------|")
     print("TESTE DA FUNCAO 'ler_variáveis_entrada_codigo'")
-    print(f"n_agregados, MMin, MMmax, alfa, MMavg, tipo_calculo_MM_agregados, metodo_integracao_FDP_Gamma: "
-          f"{saída_da_função[0:7]}")
-    print(f"correlacao_densidade_saturados, correlacao_delta_saturados: {saída_da_função[7:9]}")
-    print(f"correlacao_densidade_aromaticos, correlacao_delta_aromaticos: {saída_da_função[9:11]}")
-    print(f"correlacao_densidade_resinas, correlacao_delta_resinas: {saída_da_função[11:13]}")
-    print(f"correlacao_densidade_agregados, correlacao_delta_agregados: {saída_da_função[13:15]}")
-    print(f"Alinha_delta_agregados, c_delta_agregados, d_delta_agregados{saída_da_função[15:18]}")
-    print(f"tipo_calculo_programa, tipo_regressao: {saída_da_função[18:20]}")
-    print(f"algoritmo_otimizacao: {saída_da_função[20]}")
-    print(f"nome_planilha: {saída_da_função[21]}")
+    for i in range(len(variáveis_entrada)):
+        print(f"{variáveis_entrada[i]}: {saída_da_função[i]}")
     print("|-----------------------------------------------------------------------------------------------------------"
           "-------------------------------------------------|")
 

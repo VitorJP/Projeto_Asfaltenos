@@ -264,7 +264,7 @@ yields_calc = np.zeros(n_dados_exp)
 # 5.3.4 - Cálculos das composições de ELL e yields de asfaltenos p/ cada i-ésimo dado experimental
 for i in range(n_dados_exp):
     betasrr[i], xsL[i, :], xsH[i, :], n_it[i] = calcular_composições_ELL(T, xs_completo[i], deltas, Vs, xsagregados)
-    somaxsL[i], somaxsH[i] = xsL[i, :].sum(), xsH[i, :].sum()
+    somaxsL[i], somaxsH[i] = np.round(xsL[i, :].sum(), decimals=8), np.round(xsH[i, :].sum(), decimals=8)
     yields_calc[i] = calcular_yield_asfaltenos(betasrr[i], xsL[i, :], xsH[i, :], MMs)
 
 # ======================================================================================================================
@@ -297,14 +297,14 @@ else:
 
 # 6.3 - Criação e impressão de Dataframe com os resultados
 df_resultados = pd.DataFrame(
-    {"Fracao Solvente": ws_simplificados[:, 0],
-     "yield (exp.)": yields_exp_formatado,
-     "yield (calc.)": yields_calc_formatado, 
-     "DA (%)": DAs_formatado,
-     "Beta": betas_formatado,
-     "somaxsL": somaxsL, 
-     "somaxsH": somaxsH,
-     "qte. iteracoes": list(map(int, n_it))}
+    {"  Fracao Solvente  ": ws_simplificados[:, 0],
+     "  yield (exp.)  ": yields_exp_formatado,
+     "  yield (calc.)  ": yields_calc_formatado,
+     "  DA (%)  ": DAs_formatado,
+     "  Beta  ": betas_formatado,
+     "  somaxsL  ": somaxsL,
+     "  somaxsH  ": somaxsH,
+     "  qte. iteracoes  ": list(map(int, n_it))}
      )
 print(f"\n| DESVIO MEDIO ABSOLUTO NOS YIELDS (%): {DMA_formatado}")
 if tipo_cálculo_programa == 'regressao':

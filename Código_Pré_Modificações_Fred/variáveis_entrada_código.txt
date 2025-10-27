@@ -1,17 +1,17 @@
-************************************************************************************************************************
-*                                                                                                                      *
-*                                               Notas importantes:                                                     *
-*                                               ==================                                                     *
-*                                                                                                                      *
-*  O módulo 'MAIN.PY' é o programa principal.                                                                          *
-*  Praticamente todos cálculos executados no 'MAIN.PY' utilizam funções presentes em módulos auxiliares.               *
-*  Os módulos auxiliares foram organizados de modo a agrupar funções de propósito similar.                             *
-*  Ao final alguns módulos auxiliares, pode haver um código que testa se ele está funcionando corretamente.            *
-*  Quando presente, o código de teste de um módulo auxiliar é executado apenas quando ele é o script principal.        *
-*  Em outras palavras, quando o módulo auxiliar é importado pelo 'MAIN.py', os códigos de teste não são executados,    *
-*  por que isso tornaria o funcionamento do programa principal mais lento.                                             *
-*                                                                                                                      *
-************************************************************************************************************************
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+*                                                                                                                     *
+*                                               Notas importantes:                                                    *
+*                                               ==================                                                    *
+*                                                                                                                     *
+*  O módulo 'MAIN.PY' é o programa principal.                                                                         *
+*  Praticamente todos cálculos executados no 'MAIN.PY' utilizam funções presentes em módulos auxiliares.              *
+*  Os módulos auxiliares foram organizados de modo a agrupar funções de propósito similar.                            *
+*  Ao final alguns módulos auxiliares, pode haver um código que testa se ele está funcionando corretamente.           *
+*  Quando presente, o código de teste de um módulo auxiliar é executado apenas quando ele é o script principal.       *
+*  Em outras palavras, quando o módulo auxiliar é importado pelo 'MAIN.py', os códigos de teste não são executados,   *
+*  por que isso tornaria o funcionamento do programa principal mais lento.                                            *
+*                                                                                                                     *
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 ========================================================================================================================
 ALIMENTAÇÃO DO 'MÓDULO_MAIN.PY'
@@ -211,31 +211,27 @@ A seguir, são apresentadas as variáveis a serem lidas pelo programa principal:
 
 Valores:
 --------
-Os valores das variáveis, na ordem em que aparecem acima, são:
 
-+------------------------------+---------------------------------+-----------------------------------------------------+
-| Valor                        |                                 |                                                     |
-+------------------------------+---------------------------------+-----------------------------------------------------+
-30
-1800
-30000
-2.1
-3620.0
-medio
-trapezios
-Akbarzadeh
-Tharanivasan
-Akbarzadeh
-Akbarzadeh
-Yanes
-Yanes
-Alboudwarej
-Tharanivasan
-0
-0.647
-0.0495
-regressao
-2
-1
-Yanes_P1
+n_agregados:30
+MWmin:400
+MWmax:6000
+alfa:2.4
+MWavg:1620.0
+tipo_cálculo_MM_agregados:medio
+método_integração_FDP_Gamma:trapezios
+correlação_densidade_saturados:Akbarzadeh
+correlação_delta_saturados:Tharanivasan
+correlação_densidade_aromáticos:Akbarzadeh
+correlação_delta_aromáticos:Akbarzadeh
+correlação_densidade_resinas:Yanes
+correlação_delta_resinas:Yanes
+correlação_densidade_agregados:Alboudwarej
+correlação_delta_agregados:Tharanivasan
+Alinha_delta_agregados:0
+c_delta_agregados:0.647
+d_delta_agregados:0.0495
+tipo_cálculo_programa:regressao
+tipo_regressão:2
+algoritmo_otimização:1
+nome_planilha:Yanes_P2
 +------------------------------+---------------------------------+-----------------------------------------------------+
