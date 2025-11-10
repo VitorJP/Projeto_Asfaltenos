@@ -213,10 +213,10 @@ Valores:
 --------
 
 n_agregados:30
-MWmin:400
-MWmax:6000
-alfa:2.4
-MWavg:1620.0
+MWmin:1800
+MWmax:30000
+alfa:3.5
+MWavg:3620.0
 tipo_cálculo_MM_agregados:medio
 método_integração_FDP_Gamma:trapezios
 correlação_densidade_saturados:Akbarzadeh
@@ -233,5 +233,5 @@ d_delta_agregados:0.0495
 tipo_cálculo_programa:regressao
 tipo_regressão:2
 algoritmo_otimização:1
-nome_planilha:Yanes_P2
+nome_planilha:Alves_BR1_5C
 +------------------------------+---------------------------------+-----------------------------------------------------+

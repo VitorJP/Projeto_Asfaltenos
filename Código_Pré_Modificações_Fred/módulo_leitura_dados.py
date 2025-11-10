@@ -138,11 +138,13 @@ def ler_dados_experimentais(diretório, nome_planilha):
 
     # Composição do sistema
     frações_solvente = df.iloc[7:, 0].to_numpy()
+    frações_solvente = frações_solvente[(frações_solvente >= 0) & (frações_solvente <= 1)]
     frações_petróleo = 1 - frações_solvente
-    ws_simplificados = np.column_stack((frações_solvente, frações_petróleo)) 
+    ws_simplificados = np.column_stack((frações_solvente, frações_petróleo))
 
     # Yields
     yields_exp = df.iloc[7:, 1].to_numpy()
+    yields_exp = yields_exp[(yields_exp >= 0) & (yields_exp <= 1)]
     
     return SARA, T, solvente, ws_simplificados, yields_exp
 

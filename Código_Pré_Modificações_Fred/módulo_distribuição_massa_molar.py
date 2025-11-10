@@ -27,11 +27,11 @@ def gerar_distribuição_massa_molar(alfa, MWavg, n_agregados, MWmin, MWmax, tip
     """
 
     # Função FDP_Gamma
-    MWmon = MWmin
-    beta = (MWavg - MWmon) / alfa
+    MWmono = MWmin
+    beta = (MWavg - MWmono) / alfa
 
     def f(MWi):
-        return (MWi - MWmon) ** (alfa - 1) / (beta ** alfa * scp.special.gamma(alfa)) * np.exp(-(MWi - MWmon) / beta)
+        return (MWi - MWmono) ** (alfa - 1) / (beta ** alfa * scp.special.gamma(alfa)) * np.exp(-(MWi - MWmono) / beta)
 
     # Limites das faixas de massa molar
     n_pontos = n_agregados + 1
@@ -45,7 +45,8 @@ def gerar_distribuição_massa_molar(alfa, MWavg, n_agregados, MWmin, MWmax, tip
             for i in range(n_agregados):
                 numerador = scp.integrate.quad(MWf, MM_limites_faixas[i], MM_limites_faixas[i + 1])[0]
                 denominador = scp.integrate.quad(f, MM_limites_faixas[i], MM_limites_faixas[i + 1])[0]
-                MMsagregados[i] = numerador / denominador  # g/mol
+                MMsagregados[i] = numerador / denominador if denominador != 0 else MM_limites_faixas[i + 1]  # g/mol
+                # OBS: Caso a integração reduza o valor até se aproximar de zero, usar o caso "superior".
         case "superior":
             for i in range(n_agregados):
                 MMsagregados[i] = MM_limites_faixas[i + 1]  # g/mol

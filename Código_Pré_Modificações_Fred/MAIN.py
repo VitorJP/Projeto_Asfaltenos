@@ -80,19 +80,19 @@ if tipo_cálculo_programa == 'regressao':
         # 3.1 - Desempacotando os parâmetros a serem estimados
         match tipo_regressão:
             case 1: MWavg = parâmetros
-            # Como alfa, c_delta_agregados, Alinha_delta_agregados, d_delta_agregados não serão estimadas,
-            # usam-se os valores lidos na 'PARTE 1' deste código
+            # OBS: Como alfa, c_delta_agregados, Alinha_delta_agregados, d_delta_agregados não serão estimadas,
+            #      usam-se os valores lidos na 'PARTE 1' deste código
             case 2: MWavg, alfa = parâmetros
-            # Como c_delta_agregados, Alinha_delta_agregados, d_delta_agregados não serão estimadas,
-            # usam-se os valores lidos na 'PARTE 1' deste código
+            # OBS: Como c_delta_agregados, Alinha_delta_agregados, d_delta_agregados não serão estimadas,
+            #      usam-se os valores lidos na 'PARTE 1' deste código
             case 3: MWavg, alfa, c_delta_agregados = parâmetros
-            # Alinha_delta_agregados, d_delta_agregados não serão estimadas,
-            # usam-se os valores lidos na 'PARTE 1' deste código
+            # OBS: Alinha_delta_agregados, d_delta_agregados não serão estimadas,
+            #      usam-se os valores lidos na 'PARTE 1' deste código
             case 4: MWavg, alfa, c_delta_agregados, Alinha_delta_agregados = parâmetros
-            # d_delta_agregados não será estimado, usa-se os valores lidos na 'PARTE 1' deste código
+            # OBS: d_delta_agregados não será estimado, usa-se os valores lidos na 'PARTE 1' deste código
             case 5: MWavg, alfa, c_delta_agregados, Alinha_delta_agregados, d_delta_agregados = parâmetros
-            case _: MWavg, alfa, c_delta_agregados = parâmetros
-            # OBS: Em caso de erro, usa-se tipo_regressão == 3 como padrão.
+            case _: MWavg, alfa = parâmetros
+            # OBS: Em caso de erro, usa-se tipo_regressão == 2 como padrão.
 
         # 3.2 - Desempacotando os *args (outros argumentos da função 'F_obj' a serem passados pra função 'minimize')
         T, SARA, ws_simplificados, yields_exp = args[0]
@@ -124,9 +124,10 @@ if tipo_cálculo_programa == 'regressao':
         # 3.6 - Cálculo de equilíbrio líquido-líquido
         n_dados_exp = yields_exp.shape[0]
         yields_calc = np.zeros(n_dados_exp)
-        for i in range(n_dados_exp):
-            betarr, xsL, xsH, n_it = calcular_composições_ELL(T, xs_completo[i], deltas, Vs, xsagregados)
-            yields_calc[i] = calcular_yield_asfaltenos(betarr, xsL, xsH, MMs)
+        for i_comp in range(n_dados_exp):
+            betarr, xs_fases, n_it = calcular_composições_ELL(T, xs_completo[i_comp], deltas, Vs, xsagregados)
+            xsL, xsH = xs_fases[0], xs_fases[1]
+            yields_calc[i_comp] = calcular_yield_asfaltenos(betarr, xsL, xsH, MMs)
 
         # 3.7 - Expressão matemática a ser minimizada
         yields_diferenças = np.abs(yields_calc - yields_exp)  # diferenças entre os yields calculados e experimentais
@@ -263,7 +264,8 @@ yields_calc = np.zeros(n_dados_exp)
 
 # 5.3.4 - Cálculos das composições de ELL e yields de asfaltenos p/ cada i-ésimo dado experimental
 for i in range(n_dados_exp):
-    betasrr[i], xsL[i, :], xsH[i, :], n_it[i] = calcular_composições_ELL(T, xs_completo[i], deltas, Vs, xsagregados)
+    betasrr[i], composições, n_it[i] = calcular_composições_ELL(T, xs_completo[i], deltas, Vs, xsagregados)
+    xsL[i, :], xsH[i, :] = composições[0], composições[1]
     somaxsL[i], somaxsH[i] = np.round(xsL[i, :].sum(), decimals=8), np.round(xsH[i, :].sum(), decimals=8)
     yields_calc[i] = calcular_yield_asfaltenos(betasrr[i], xsL[i, :], xsH[i, :], MMs)
 
