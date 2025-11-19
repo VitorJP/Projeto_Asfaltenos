@@ -125,12 +125,12 @@ if tipo_cálculo_programa == 'regressao':
         n_dados_exp = yields_exp.shape[0]
         yields_calc = np.zeros(n_dados_exp)
         for i_comp in range(n_dados_exp):
-            betarr, xs_fases, n_it = calcular_composições_ELL(T, xs_completo[i_comp], deltas, Vs, xsagregados)
-            xsL, xsH = xs_fases[0], xs_fases[1]
+            betarr, xsL, xsH, n_it = calcular_composições_ELL(T, xs_completo[i_comp], deltas, Vs, xsagregados)
             yields_calc[i_comp] = calcular_yield_asfaltenos(betarr, xsL, xsH, MMs)
 
         # 3.7 - Expressão matemática a ser minimizada
         yields_diferenças = np.abs(yields_calc - yields_exp)  # diferenças entre os yields calculados e experimentais
+        print("yield_diferenças: ", yields_diferenças.sum())
 
         return (1/n_dados_exp)*yields_diferenças.sum()
     
@@ -175,24 +175,24 @@ if tipo_cálculo_programa == 'regressao':
                 limites_parâmetros = [(1.2 * MWmin, 1e4)]
                 # MWavg
             case 2:
-                limites_parâmetros = [(1.2 * MWmin, 1e4), (1.15, 60)]
+                limites_parâmetros = [(1.2 * MWmin, 1e4), (1.15, 80)]
                 # MWavg, alfa
             case 3:
-                limites_parâmetros = [(1.2 * MWmin, 1e4), (1.15, 60), (0.634, 0.672)]
+                limites_parâmetros = [(1.2 * MWmin, 1e4), (1.15, 80), (0.634, 0.672)]
                 # MWavg, alfa, c_delta_agregados
                 # Obs: limites de c_delta_agregados com base na pg. 87 da tese de Diana Maria Barrera (2012)
             case 4:
-                limites_parâmetros = [(1.2 * MWmin, 1e4), (1.15, 60), (0.634, 0.672), (0, 0.03)]
+                limites_parâmetros = [(1.2 * MWmin, 1e4), (1.15, 80), (0.634, 0.672), (0, 0.03)]
                 # MWavg, alfa, c_delta_agregados, Alinha_delta_agregados
                 # Obs: limites de Alinha_delta_agregados, c_delta_agregados com base nas pg. 85-87
                 #      da tese de Diana Maria Barrera (2012)
             case 5:
-                limites_parâmetros = [(1.2 * MWmin, 1e4), (1.15, 60), (0.634, 0.672), (0, 0.03), (0.0494, 0.0496)]
+                limites_parâmetros = [(1.2 * MWmin, 1e4), (1.15, 80), (0.634, 0.672), (0, 0.03), (0.0494, 0.0496)]
                 # MWavg, alfa, c_delta_agregados, Alinha_delta_agregados, d_delta_agregados
                 # Obs: limites de Alinha_delta_agregados, c_delta_agregados, d_delta_agregados com base nas pg. 85-87
                 #      da tese de Diana Maria Barrera (2012)
             case _:
-                limites_parâmetros = [(1.2 * MWmin, 1e4), (1.15, 60), (0.634, 0.672)]
+                limites_parâmetros = [(1.2 * MWmin, 1e4), (1.15, 80), (0.634, 0.672)]
             # MWavg, alfa, c_delta_agregados
             # Obs: limites de c_delta_agregados com base na pg. 87 da tese de Diana Maria Barrera (2012)
             # OBS: em caso de erro, usar tipo_regressão == 3 como padrão.
@@ -264,8 +264,7 @@ yields_calc = np.zeros(n_dados_exp)
 
 # 5.3.4 - Cálculos das composições de ELL e yields de asfaltenos p/ cada i-ésimo dado experimental
 for i in range(n_dados_exp):
-    betasrr[i], composições, n_it[i] = calcular_composições_ELL(T, xs_completo[i], deltas, Vs, xsagregados)
-    xsL[i, :], xsH[i, :] = composições[0], composições[1]
+    betasrr[i], xsL[i, :], xsH[i, :], n_it[i] = calcular_composições_ELL(T, xs_completo[i], deltas, Vs, xsagregados)
     somaxsL[i], somaxsH[i] = np.round(xsL[i, :].sum(), decimals=8), np.round(xsH[i, :].sum(), decimals=8)
     yields_calc[i] = calcular_yield_asfaltenos(betasrr[i], xsL[i, :], xsH[i, :], MMs)
 

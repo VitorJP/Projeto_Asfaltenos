@@ -220,7 +220,7 @@ MWavg:3620.0
 tipo_cálculo_MM_agregados:medio
 método_integração_FDP_Gamma:trapezios
 correlação_densidade_saturados:Akbarzadeh
-correlação_delta_saturados:Tharanivasan
+correlação_delta_saturados:Akbarzadeh
 correlação_densidade_aromáticos:Akbarzadeh
 correlação_delta_aromáticos:Akbarzadeh
 correlação_densidade_resinas:Yanes
@@ -230,8 +230,8 @@ correlação_delta_agregados:Tharanivasan
 Alinha_delta_agregados:0
 c_delta_agregados:0.647
 d_delta_agregados:0.0495
-tipo_cálculo_programa:regressao
+tipo_cálculo_programa:predicao
 tipo_regressão:2
 algoritmo_otimização:1
-nome_planilha:Alves_BR1_5C
+nome_planilha:Alves_BR3_25C
 +------------------------------+---------------------------------+-----------------------------------------------------+

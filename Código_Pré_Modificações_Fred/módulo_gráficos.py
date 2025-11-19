@@ -43,7 +43,7 @@ def plotar_yield_curves(ws_solvente, yields_exp, yields_calc, informações_auxi
     # Títulos dos eixos, valores min e max de cada eixo, fontes das marcas de escala, marcas de escala secundárias
     plt.xlabel("fração de solvente, wt%", fontsize=14)
     plt.ylabel("yield de asfalteno, wt%", fontsize=14)
-    plt.axis(xmin=40, xmax=100, ymin=0)
+    plt.axis(xmin=0, xmax=100, ymin=0)
     plt.xticks(fontsize=12)
     plt.yticks(fontsize=12)
     plt.gca().xaxis.set_minor_locator(MultipleLocator(5))  # Marcas de escala secundárias no eixo x
