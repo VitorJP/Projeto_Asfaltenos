@@ -125,12 +125,11 @@ if tipo_cálculo_programa == 'regressao':
         n_dados_exp = yields_exp.shape[0]
         yields_calc = np.zeros(n_dados_exp)
         for i_comp in range(n_dados_exp):
-            betarr, xsL, xsH, n_it = calcular_composições_ELL(T, xs_completo[i_comp], deltas, Vs, xsagregados)
+            betarr, xsL, xsH, n_it = calcular_composições_ELL(T, xs_completo[i_comp], deltas, Vs, xsagregados, MMs)
             yields_calc[i_comp] = calcular_yield_asfaltenos(betarr, xsL, xsH, MMs)
 
         # 3.7 - Expressão matemática a ser minimizada
         yields_diferenças = np.abs(yields_calc - yields_exp)  # diferenças entre os yields calculados e experimentais
-        print("yield_diferenças: ", yields_diferenças.sum())
 
         return (1/n_dados_exp)*yields_diferenças.sum()
     
@@ -264,7 +263,7 @@ yields_calc = np.zeros(n_dados_exp)
 
 # 5.3.4 - Cálculos das composições de ELL e yields de asfaltenos p/ cada i-ésimo dado experimental
 for i in range(n_dados_exp):
-    betasrr[i], xsL[i, :], xsH[i, :], n_it[i] = calcular_composições_ELL(T, xs_completo[i], deltas, Vs, xsagregados)
+    betasrr[i], xsL[i, :], xsH[i, :], n_it[i] = calcular_composições_ELL(T, xs_completo[i], deltas, Vs, xsagregados, MMs)
     somaxsL[i], somaxsH[i] = np.round(xsL[i, :].sum(), decimals=8), np.round(xsH[i, :].sum(), decimals=8)
     yields_calc[i] = calcular_yield_asfaltenos(betasrr[i], xsL[i, :], xsH[i, :], MMs)
 

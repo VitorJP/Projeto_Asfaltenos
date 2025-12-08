@@ -216,7 +216,7 @@ n_agregados:30
 MWmin:1800
 MWmax:30000
 alfa:3.5
-MWavg:3620.0
+MWavg:3620.00
 tipo_cálculo_MM_agregados:medio
 método_integração_FDP_Gamma:trapezios
 correlação_densidade_saturados:Akbarzadeh
@@ -233,5 +233,5 @@ d_delta_agregados:0.0495
 tipo_cálculo_programa:predicao
 tipo_regressão:2
 algoritmo_otimização:1
-nome_planilha:Alves_BR3_25C
+nome_planilha:Tharanivasan_Lloydminster_hept
 +------------------------------+---------------------------------+-----------------------------------------------------+

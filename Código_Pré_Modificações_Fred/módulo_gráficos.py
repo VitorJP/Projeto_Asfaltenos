@@ -27,7 +27,7 @@ def plotar_yield_curves(ws_solvente, yields_exp, yields_calc, informações_auxi
     plt.title(f"YIELD CURVE - DMA(%): {DMA_formatado}", fontsize=16, fontweight="bold")
 
     # Série de dados experimentais
-    # Obs: se todos os yields experimentais são nulos (ex: 'nome_planilha' = 'Yanes_P3'),
+    # Obs: se todos os yields experimentais são nulos,
     #      a curva experimental é plotada na cor branca (desaparece)
     if all(yield_exp == 0 for yield_exp in yields_exp):
         plt.plot(100*ws_solvente, 100*yields_exp, "o", mfc="white", mec="white", markersize=10)
@@ -129,5 +129,65 @@ def plotar_distribuição_massa_molar(MMsagregados, xsagregados, alfa, MWavg, in
 
     # Fechando o arquivo após salvá-lo
     plt.close()
+
+    pass
+
+
+def plotar_yield_curves_cinéticas(ws_solvente, tempos, yields_exp, yields_cinéticas):
+    """ Cria um gráfico contendo as curvas de solubilidade calculadas em diferentes tempos,
+        a curva de equilíbrio (modelo) e a experimental.
+
+    Inputs:
+        ws_solvente (array)           : frações mássicas de solvente
+        yields_exp (array)            : yields fracionais de asfaltenos (experimentais)
+        yields_calc (array)           : yields fracionais de asfaltenos (experimentais)
+        informações_auxiliares (list) : lista dos elementos [DMA_formatado, tipo_cálculo_programa, nome_planilha]
+                                        a lista acima contém informações úteis para o nome do arquivo do gráfico a ser
+                                        salvo na pasta 'Resultados'
+
+    Outputs:
+        Mostra o gráfico e o salva na pasta Resultados
+    """
+
+    # Título
+    plt.title("YIELD CURVES - TEMPORAL ANALYSIS")
+
+    # Série de dados experimentais
+    # Obs: se todos os yields experimentais são nulos,
+    #      a curva experimental é plotada na cor branca (desaparece)
+    if all(yield_exp == 0 for yield_exp in yields_exp):
+        plt.plot(100 * ws_solvente, 100 * yields_exp, "o", mfc="white", mec="white", markersize=10)
+    if any(yield_exp != 0 for yield_exp in yields_exp):
+        plt.plot(100 * ws_solvente, 100 * yields_exp, "o", mfc="blue", mec="black", markersize=10)
+
+    # Série de dados calculada em diferentes tempos
+    n_tempos = len(tempos)
+    for t in range(n_tempos):
+        plt.plot(100 * ws_solvente, 100 * yields_cinéticas[t])
+
+    # Série de dados de equilíbrio
+    plt.plot(100 * ws_solvente, 100 * yields_cinéticas[-1], c="red")
+
+    # Legenda
+    legenda = ["experimental"]
+    for t in range(n_tempos):
+        legenda_t = str(tempos[t]) + "h"
+        legenda.append(legenda_t)
+    legenda.append("equilíbrio")
+    plt.legend(legenda, fontsize=12, loc="upper left")
+
+    # Títulos dos eixos, valores min e max de cada eixo, fontes das marcas de escala, marcas de escala secundárias
+    plt.xlabel("fração de solvente, wt%", fontsize=14)
+    plt.ylabel("yield de asfalteno, wt%", fontsize=14)
+    plt.axis(xmin=0, xmax=100, ymin=0)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.gca().xaxis.set_minor_locator(MultipleLocator(5))  # Marcas de escala secundárias no eixo x
+    plt.gca().yaxis.set_minor_locator(MultipleLocator(0.5))  # Marcas de escala secundárias no eixo y
+
+    # Linhas de grade
+    plt.grid(color="k", linestyle="-", linewidth=0.1)
+
+    plt.show()
 
     pass
