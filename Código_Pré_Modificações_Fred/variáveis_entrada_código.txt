@@ -250,8 +250,8 @@ correlação_delta_agregados:Tharanivasan
 Alinha_delta_agregados:0
 c_delta_agregados:0.647
 d_delta_agregados:0.0495
-tipo_cálculo_equilíbrio:predicao
-tipo_cálculo_cinética:predicao
+tipo_cálculo_equilíbrio:regressao
+tipo_cálculo_cinética:regressao1
 tipo_regressão_equilibrio:2
 algoritmo_otimização:1
 nome_planilha:Tharanivasan_Lloydminster_hept

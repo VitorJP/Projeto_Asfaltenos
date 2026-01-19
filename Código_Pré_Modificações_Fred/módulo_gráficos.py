@@ -21,7 +21,7 @@ def plotar_yield_curves(ws_solvente, yields_exp, yields_calc, informações_auxi
     """
 
     # Desempacotando a lista 'informações_auxiliares'
-    DMA_formatado, tipo_cálculo_programa, tipo_regressão, algoritmo_otimização, nome_planilha = informações_auxiliares
+    DMA_formatado, tipo_cálculo, tipo_regressão, algoritmo_otimização, nome_planilha = informações_auxiliares
 
     # Título
     plt.title(f"YIELD CURVE - DMA(%): {DMA_formatado}", fontsize=16, fontweight="bold")
@@ -53,7 +53,7 @@ def plotar_yield_curves(ws_solvente, yields_exp, yields_calc, informações_auxi
     plt.grid(color="k", linestyle="-", linewidth=0.1)
 
     # Nome do arquivo do gráfico a ser salvo
-    if tipo_cálculo_programa == 'predicao':
+    if tipo_cálculo == 'predicao':
         nome_arquivo_gráfico = f"{nome_planilha}_YIELDCURVE.png"
     else:
         nome_arquivo_gráfico = f"{nome_planilha}_YIELDCURVE_tipo_regressao_{tipo_regressão}_" \
@@ -61,10 +61,12 @@ def plotar_yield_curves(ws_solvente, yields_exp, yields_calc, informações_auxi
     
     # Salvando o gráfico
     diretório_da_pasta_deste_modulo = os.path.dirname(os.path.abspath(__file__))
-    if tipo_cálculo_programa == 'predicao':
-        diretório_png = os.path.join(diretório_da_pasta_deste_modulo, "Resultados", "Predição", nome_arquivo_gráfico)
+    if tipo_cálculo == 'predicao':
+        diretório_png = os.path.join(diretório_da_pasta_deste_modulo,
+                                     "Resultados_Equilíbrio", "Predição", nome_arquivo_gráfico)
     else:
-        diretório_png = os.path.join(diretório_da_pasta_deste_modulo, "Resultados", "Regressão", nome_arquivo_gráfico)
+        diretório_png = os.path.join(diretório_da_pasta_deste_modulo,
+                                     "Resultados_Equilíbrio", "Regressão", nome_arquivo_gráfico)
     plt.savefig(diretório_png, dpi=300, bbox_inches="tight")
 
     # Fechando o arquivo após salvá-lo
@@ -92,7 +94,7 @@ def plotar_distribuição_massa_molar(MMsagregados, xsagregados, alfa, MWavg, in
     """
 
     # Desempacotando a lista 'informações_auxiliares'
-    DMA_formatado, tipo_cálculo_programa, tipo_regressão, algoritmo_otimização, nome_planilha = informações_auxiliares
+    DMA_formatado, tipo_cálculo, tipo_regressão, algoritmo_otimização, nome_planilha = informações_auxiliares
 
     # Título
     plt.title(f"DIST. MASSA MOLAR - DMA(%): {DMA_formatado}", fontsize=16, fontweight="bold")
@@ -113,7 +115,7 @@ def plotar_distribuição_massa_molar(MMsagregados, xsagregados, alfa, MWavg, in
     plt.grid(color="k", linestyle="-", linewidth=0.1)
 
     # Nome do arquivo do gráfico a ser salvo
-    if tipo_cálculo_programa == 'predicao':
+    if tipo_cálculo == 'predicao':
         nome_arquivo_gráfico = f"{nome_planilha}_DISTMASSAMOLAR.png"
     else:
         nome_arquivo_gráfico = f"{nome_planilha}_DISTMASSAMOLAR_tipo_regressao_{tipo_regressão}_" \
@@ -121,10 +123,12 @@ def plotar_distribuição_massa_molar(MMsagregados, xsagregados, alfa, MWavg, in
     
     # Salvando o gráfico
     diretório_da_pasta_deste_modulo = os.path.dirname(os.path.abspath(__file__))
-    if tipo_cálculo_programa == 'predicao':
-        diretório_png = os.path.join(diretório_da_pasta_deste_modulo, "Resultados", "Predição", nome_arquivo_gráfico)
+    if tipo_cálculo == 'predicao':
+        diretório_png = os.path.join(diretório_da_pasta_deste_modulo,
+                                     "Resultados_Equilíbrio", "Predição", nome_arquivo_gráfico)
     else:
-        diretório_png = os.path.join(diretório_da_pasta_deste_modulo, "Resultados", "Regressão", nome_arquivo_gráfico)
+        diretório_png = os.path.join(diretório_da_pasta_deste_modulo,
+                                     "Resultados_Equilíbrio", "Regressão", nome_arquivo_gráfico)
     plt.savefig(diretório_png, dpi=300, bbox_inches="tight")
 
     # Fechando o arquivo após salvá-lo
@@ -133,7 +137,7 @@ def plotar_distribuição_massa_molar(MMsagregados, xsagregados, alfa, MWavg, in
     pass
 
 
-def plotar_yield_curves_cinéticas(ws_solvente, tempos, yields_exp, yields_cinéticas):
+def plotar_yield_curves_cinéticas(ws_solvente, tempos, yields_exp, yields_cinéticas, informações_auxiliares):
     """ Cria um gráfico contendo as curvas de solubilidade calculadas em diferentes tempos,
         a curva de equilíbrio (modelo) e a experimental.
 
@@ -149,8 +153,11 @@ def plotar_yield_curves_cinéticas(ws_solvente, tempos, yields_exp, yields_ciné
         Mostra o gráfico e o salva na pasta Resultados
     """
 
+    # Desempacotando a lista 'informações_auxiliares'
+    tipo_cálculo, nome_planilha = informações_auxiliares
+
     # Título
-    plt.title("YIELD CURVES - TEMPORAL ANALYSIS")
+    plt.title("YIELD CURVES - TIME ANALYSIS")
 
     # Série de dados experimentais
     # Obs: se todos os yields experimentais são nulos,
@@ -188,6 +195,23 @@ def plotar_yield_curves_cinéticas(ws_solvente, tempos, yields_exp, yields_ciné
     # Linhas de grade
     plt.grid(color="k", linestyle="-", linewidth=0.1)
 
-    plt.show()
+    # Nome do arquivo do gráfico a ser salvo
+    if tipo_cálculo == 'predicao':
+        nome_arquivo_gráfico = f"{nome_planilha}_YIELDCURVE_KINECTS.png"
+    else:
+        nome_arquivo_gráfico = f"{nome_planilha}_YIELDCURVE_KINECTS_regressao.png"
+
+    # Salvando o gráfico
+    diretório_da_pasta_deste_modulo = os.path.dirname(os.path.abspath(__file__))
+    if tipo_cálculo == 'predicao':
+        diretório_png = os.path.join(diretório_da_pasta_deste_modulo,
+                                     "Resultados_Cinética", "Predição", nome_arquivo_gráfico)
+    else:
+        diretório_png = os.path.join(diretório_da_pasta_deste_modulo,
+                                     "Resultados_Cinética", "Regressão", nome_arquivo_gráfico)
+    plt.savefig(diretório_png, dpi=300, bbox_inches="tight")
+
+    # Fechando o arquivo após salvá-lo
+    plt.close()
 
     pass

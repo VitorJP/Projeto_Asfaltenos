@@ -295,20 +295,20 @@ if tipo_cálculo_cinética != "nao":
     # 6.3 - Otimização dos Parâmetros Cinéticos de Tempo Infinito
     if tipo_cálculo_cinética in ("regressao1", "regressao2"):
         # 6.3.1 - Função Objetivo
-        def F_obj_1(parâmetros_opt, yields_eq, w_solv, w_onset, yield_max):
-            yields_t_inf = calcular_yield_tempo_infinito(w_solv, w_onset, yield_max, parâmetros_opt)
+        def F_obj_1(params_opt, yields_eq, w_solv, w_onset, yield_max):
+            yields_t_inf = calcular_yield_tempo_infinito(w_solv, w_onset, yield_max, params_opt)
             return np.mean(np.abs(yields_t_inf - yields_eq))
 
         # 6.3.2 - Otimização dos Parâmetros
-        argumentos_F_obj_1 = (yields_otimização, w_solv, w_onset, yield_max)
+        argumentos_F_obj_1 = (yields_eq, w_solv, w_onset, yield_max)
         sol_1 = scp.optimize.minimize(F_obj_1, parâmetros_cinéticos_1, method="Nelder-Mead", args=argumentos_F_obj_1)
         parâmetros_cinéticos_1 = sol_1.x
 
     # 6.4 - Otimização dos Parâmetros Cinéticos Temporais
     if tipo_cálculo_cinética == "regressao2":
         # 6.4.1 - Função Objetivo
-        def F_obj_2(parâmetros, tempos, yields_temp_exp, yield_max, parâmetros_t_inf, w_solv, w_onset):
-            yields_ts = calcular_yields_temporais(tempos, w_solv, w_onset, yield_max, parâmetros_t_inf, parâmetros)
+        def F_obj_2(params_opt, ts, yields_temp_exp, yield_max, params_t_inf, w_solv, w_onset):
+            yields_ts = calcular_yields_temporais(ts, w_solv, w_onset, yield_max, params_t_inf, params_opt)
             return np.mean(np.abs(yields_ts - yields_temp_exp))
 
         # 6.4.2 - Otimização dos Parâmetros
@@ -321,8 +321,9 @@ if tipo_cálculo_cinética != "nao":
         tempos, w_solv, w_onset, yield_max, parâmetros_cinéticos_1, parâmetros_cinéticos_2
     )
 
-    # 6.5.1 - Criação do Gráfico de Curvas Cinéticas em diferentes tempos
-    plotar_yield_curves_cinéticas(w_solv, tempos, yields_exp, yields_temp_calc)
+    # 6.6 - Criação do Gráfico de Curvas Cinéticas em diferentes tempos
+    informações_auxiliares = [tipo_cálculo_cinética, nome_planilha]
+    plotar_yield_curves_cinéticas(w_solv, tempos, yields_exp, yields_temp_calc, informações_auxiliares)
 
 # ======================================================================================================================
 # PARTE 7 - EXIBIÇÃO DOS RESULTADOS
