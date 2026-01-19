@@ -133,7 +133,7 @@ A seguir, são apresentadas as variáveis a serem lidas pelo programa principal:
 |                              |                                 |         (Barrera)                                   |
 |                              |                                 | Obs: a opção 'Alboudwarej' é a correlação presente  |
 |                              |                                 |      na p. 75 da tese de Asok Kumar Tharanivasan    |
-|                              |                                 |      (2012)                                         |
+|                              |                                 |      (2012)                                        |
 |                              |                                 | Obs: a opção 'Barrera' é a correlação presente na   |
 |                              |                                 |      p. 39 da dissertação de José Francisco Romero  |
 |                              |                                 |      Yanes (2018)                                   |
@@ -166,20 +166,40 @@ A seguir, são apresentadas as variáveis a serem lidas pelo programa principal:
 |                              |                                 | Obs: esta variável é útil apenas se                 |
 |                              |                                 |      'correlação_delta_agregados' = 'Barrera'       |
 +------------------------------+---------------------------------+-----------------------------------------------------+
-| Tomadas de decisão no MAIN   | tipo_cálculo_programa           | tipo de cálculo a ser executado pelo                |
-|                              |                                 | programa principal                                  |
+| Tomadas de decisão no MAIN   | tipo_cálculo_equilíbrio         | tipo de cálculo a ser executado pelo                |
+|                              |                                 | programa principal para o equilíbrio de fases       |
 |                              |                                 | opções: (predicao) Utiliza os parâmetros lidos      |
 |                              |                                 |                    neste arquivo (ver próxima       |
 |                              |                                 |                    variável: 'tipo_regressão')      |
 |                              |                                 |                    sem estimá-los.                  |
 |                              |                                 |         (regressao) Utiliza os parâmetros lidos     |
-|                              |                                 |                     neste arquivo (ver próxima      |
-|                              |                                 |                     variável:'tipo_regressão')      |
-|                              |                                 |                     como chutes para os valores     |
-|                              |                                 |                     a serem estimados               |
+|                              |                                 |                     neste arquivo (ver variável     |
+|                              |                                 |                     'tipo_regressão') como chutes   |
+|                              |                                 |                     iniciais para os valores a      |
+|                              |                                 |                     serem estimados                 |
 |                              +---------------------------------+-----------------------------------------------------+
-|                              | tipo_regressão                  | define quais parâmetros serão regredidos pelo       |
-|                              |                                 | programa principal                                  |
+|                              | tipo_cálculo_cinética           | tipo de cálculo a ser executado pelo                |
+|                              |                                 | programa principal para a cinética de precipitação  |
+|                              |                                 | opções: (nao) Não realiza os cálculos cinéticos.    |
+|                              |                                 |         (predicao) Utiliza os parâmetros lidos      |
+|                              |                                 |                    neste arquivo (ver próxima       |
+|                              |                                 |                    variável: 'tipo_regressão')      |
+|                              |                                 |                    sem estimá-los.                  |
+|                              |                                 |         (regressao1) Utiliza os parâmetros lidos    |
+|                              |                                 |                      neste arquivo (ver próxima     |
+|                              |                                 |                      variável:'tipo_regressão')     |
+|                              |                                 |                      como chutes para os parâmetros |
+|                              |                                 |                      de tempo infinito a serem      |
+|                              |                                 |                      estimados                      |
+|                              |                                 |         (regressao2) Utiliza os parâmetros lidos    |
+|                              |                                 |                      neste arquivo (ver próxima     |
+|                              |                                 |                      variável:'tipo_regressão')     |
+|                              |                                 |                      como chutes para todos os      |
+|                              |                                 |                      parâmetros cinéticos a serem   |
+|                              |                                 |                      estimados                      |
+|                              +---------------------------------+-----------------------------------------------------+
+|                              | tipo_regressão_equilibrio       | define quais parâmetros serão regredidos pelo       |
+|                              |                                 | programa principal na seção de equilíbrio de fases  |
 |                              |                                 | opções: (1) MWavg                                   |
 |                              |                                 |         (2) MWavg, alfa                             |
 |                              |                                 |         (3) MWavg, alfa, c_delta_agregados          |
@@ -216,7 +236,7 @@ n_agregados:30
 MWmin:1800
 MWmax:30000
 alfa:3.5
-MWavg:3620.00
+MWavg:3620.0
 tipo_cálculo_MM_agregados:medio
 método_integração_FDP_Gamma:trapezios
 correlação_densidade_saturados:Akbarzadeh
@@ -230,8 +250,9 @@ correlação_delta_agregados:Tharanivasan
 Alinha_delta_agregados:0
 c_delta_agregados:0.647
 d_delta_agregados:0.0495
-tipo_cálculo_programa:predicao
-tipo_regressão:2
+tipo_cálculo_equilíbrio:predicao
+tipo_cálculo_cinética:predicao
+tipo_regressão_equilibrio:2
 algoritmo_otimização:1
 nome_planilha:Tharanivasan_Lloydminster_hept
 +------------------------------+---------------------------------+-----------------------------------------------------+

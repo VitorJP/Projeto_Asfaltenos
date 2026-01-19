@@ -32,10 +32,10 @@ def plotar_yield_curves(ws_solvente, yields_exp, yields_calc, informações_auxi
     if all(yield_exp == 0 for yield_exp in yields_exp):
         plt.plot(100*ws_solvente, 100*yields_exp, "o", mfc="white", mec="white", markersize=10)
     if any(yield_exp != 0 for yield_exp in yields_exp):
-        plt.plot(100*ws_solvente, 100*yields_exp, "o", mfc="blue", mec="black", markersize=10)
+        plt.plot(100*ws_solvente, 100*yields_exp, "o", mfc="orange", mec="black", markersize=10)
     
     # Série de dados calculada
-    plt.plot(100*ws_solvente, 100*yields_calc, "o", mfc="red", mec="black", markersize=10)
+    plt.plot(100*ws_solvente, 100*yields_calc, "o", mfc="blue", mec="black", markersize=10)
 
     # Legenda
     plt.legend(["experimental", "calculado"], fontsize=12, loc="upper left")
@@ -166,7 +166,7 @@ def plotar_yield_curves_cinéticas(ws_solvente, tempos, yields_exp, yields_ciné
         plt.plot(100 * ws_solvente, 100 * yields_cinéticas[t])
 
     # Série de dados de equilíbrio
-    plt.plot(100 * ws_solvente, 100 * yields_cinéticas[-1], c="red")
+    plt.plot(100 * ws_solvente, 100 * yields_cinéticas[-1], c="red", ls='--', lw='2')
 
     # Legenda
     legenda = ["experimental"]

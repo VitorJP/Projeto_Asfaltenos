@@ -468,7 +468,6 @@ def calcular_composições_ELL(T, zs, deltas, Vs, xsagregados, MMs):
     # Leitura da composição global
     zs[zs < 1e-8] = 0
     zs = normalizar_composição(zs)
-    # print("zs: ", zs, "\n")
 
     # Declaração do Dicionário do Modelo Termodinâmico
     dados_modelo_termodinamico = {
@@ -476,7 +475,7 @@ def calcular_composições_ELL(T, zs, deltas, Vs, xsagregados, MMs):
         "parâmetros": [T, Vs, deltas],  # Parâmetros necessários para o Modelo escolhido
     }
 
-    chute_inicial_asfaltenico, printar = True, True
+    chute_inicial_asfaltenico, printar = True, False
 
     # Método de indiciação do chute inicial
     if chute_inicial_asfaltenico:
@@ -511,8 +510,8 @@ def calcular_composições_ELL(T, zs, deltas, Vs, xsagregados, MMs):
         print("beta: ", beta_opt)
         print("m_fase_beta(%): ", m_beta_rel)
         print("xs_fase_beta: ", xs_H_opt)
-        # print("xs_fase_0: ", xs_L_opt)
-        # print("zs: ", zs)
+        print("xs_fase_0: ", xs_L_opt)
+        print("zs: ", zs)
         print("G x10³: ", 1000*G_opt)
         print()
 

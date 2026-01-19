@@ -17,7 +17,9 @@ from módulo_propriedades_frações_SAR import calcular_propriedades_saturados, 
 from módulo_distribuição_massa_molar import gerar_distribuição_massa_molar
 from módulo_propriedades_agregados import calcular_propriedades_agregados
 from módulo_equilíbrio_líquido_líquido import calcular_composições_ELL, calcular_yield_asfaltenos
-from módulo_gráficos import plotar_yield_curves, plotar_distribuição_massa_molar
+from módulo_análise_cinética import calcular_yield_tempo_infinito, calcular_yields_temporais
+from módulo_gráficos import plotar_yield_curves, plotar_distribuição_massa_molar, plotar_yield_curves_cinéticas
+
 
 # ======================================================================================================================
 # PARTE 1 - LEITURA DE INFORMAÇÕES BÁSICAS
@@ -31,15 +33,15 @@ diretório_do_txt = os.path.join(diretório_deste_módulo, 'variáveis_entrada_c
  correlação_densidade_resinas, correlação_delta_resinas,
  correlação_densidade_agregados, correlação_delta_agregados, 
  Alinha_delta_agregados, c_delta_agregados, d_delta_agregados,
- tipo_cálculo_programa, tipo_regressão,
+ tipo_cálculo_equilíbrio, tipo_cálculo_cinética, tipo_regressão_equilíbrio,
  algoritmo_otimização,
  nome_planilha) = ler_variáveis_entrada_código(diretório_do_txt)
 
 # 1.2 - Validação dos valores das variáveis 'correlação_delta_agregados' e 'tipo_regressão'
 # Obs: só faz sentido que 'tipo_regressão' seja >=3 e <=5 se correlação_delta_agregados = 'Barrera'
-if 3 <= tipo_regressão <= 5 and correlação_delta_agregados != 'Barrera':
+if 3 <= tipo_regressão_equilíbrio <= 5 and correlação_delta_agregados != 'Barrera':
     mensagem = "\nATENCAO: Corrija o arquivo 'variaveis_entrada_codigo.txt'"
-    mensagem += f"\nPONTO A CORRIGIR: a variavel 'tipo_regressao' = {tipo_regressão} " \
+    mensagem += f"\nPONTO A CORRIGIR: a variavel 'tipo_regressao' = {tipo_regressão_equilíbrio} " \
                 f"exige que 'correlacao_delta_agregados == 'Barrera'."
     raise ValueError(mensagem)
 
@@ -71,14 +73,14 @@ MMs[3], rhos[3], deltas[3], Vs[3] = calcular_propriedades_resinas(
 # PARTE 3 - CRIAÇÃO DA FUNÇÃO OBJETIVO PARA REGRESSÃO DOS PARÂMETROS
 # Este bloco será pulado caso tipo_cálculo_programa == 'predicao'
 
-if tipo_cálculo_programa == 'regressao':
+if tipo_cálculo_equilíbrio == 'regressao':
 
     def F_obj(parâmetros, *args):
 
         global MWavg, alfa, c_delta_agregados, Alinha_delta_agregados, d_delta_agregados
 
         # 3.1 - Desempacotando os parâmetros a serem estimados
-        match tipo_regressão:
+        match tipo_regressão_equilíbrio:
             case 1: MWavg = parâmetros
             # OBS: Como alfa, c_delta_agregados, Alinha_delta_agregados, d_delta_agregados não serão estimadas,
             #      usam-se os valores lidos na 'PARTE 1' deste código
@@ -115,8 +117,7 @@ if tipo_cálculo_programa == 'regressao':
         deltas[4:4 + n_agregados] = deltasagregados[0:n_agregados]
         Vs[4:4 + n_agregados] = Vsagregados[0:n_agregados] 
         
-        # 3.5 - Composição global do sistema em termos de
-        # [Solvente, S, A, R, Asf0, Asf1, ...] (base mássica e base molar)
+        # 3.5 - Composição global do sistema em termos de [Solvente, S, A, R, Asf0, Asf1, ...] (base mássica e molar)
         ws_completo, xs_completo = fracionar_composição_global(ws_simplificados, SARA, wsagregados, MMs)
         ws_completo = np.apply_along_axis(func1d=normalizar_composição, axis=1, arr=ws_completo)
         xs_completo = np.apply_along_axis(func1d=normalizar_composição, axis=1, arr=xs_completo)
@@ -138,14 +139,14 @@ if tipo_cálculo_programa == 'regressao':
 # Este bloco é pulado caso tipo_cálculo_programa == 'predicao'
 
     # 4.1 - Chutes iniciais dos parâmetros a serem estimados
-    match tipo_regressão:
+    match tipo_regressão_equilíbrio:
         case 1: chute_inicial = np.array([MWavg])
         case 2: chute_inicial = np.array([MWavg, alfa])
         case 3: chute_inicial = np.array([MWavg, alfa, c_delta_agregados])
         case 4: chute_inicial = np.array([MWavg, alfa, c_delta_agregados, Alinha_delta_agregados])
         case 5: chute_inicial = np.array([MWavg, alfa, c_delta_agregados, Alinha_delta_agregados, d_delta_agregados])
-        case _: chute_inicial = np.array([MWavg, alfa, c_delta_agregados])
-        # OBS: em caso de erro, usa-se tipo_regressão == 3 como padrão.
+        case _: chute_inicial = np.array([MWavg, alfa])
+        # OBS: em caso de erro, usa-se tipo_regressão == 2 como padrão.
 
     # 4.2 - Atribuição de valores para os *args (outros argumentos da função 'F_obj'
     # a serem passados pra função 'minimize')
@@ -210,7 +211,7 @@ if tipo_cálculo_programa == 'regressao':
         sol = 0
 
     # 4.4 - Alocação dos parâmetros estimados
-    match tipo_regressão:
+    match tipo_regressão_equilíbrio:
         case 1: MWavg = sol.x[0]
         case 2: MWavg, alfa = sol.x
         case 3: MWavg, alfa, c_delta_agregados = sol.x
@@ -251,7 +252,7 @@ xs_completo = np.apply_along_axis(func1d=normalizar_composição, axis=1, arr=xs
 n_dados_exp = yields_exp.shape[0]
 
 # 5.3.2 - Inicialização dos arrays que armazenarão os resultados dos cálculos de ELL
-betasrr = np.zeros(n_dados_exp)  # betas de Rachford-Rice
+betas = np.zeros(n_dados_exp)  # betas de Rachford-Rice
 xsL, xsH = [np.zeros((n_dados_exp, 4 + n_agregados)) for _ in range(2)]
 # composição da fase leve, composição da fase pesada
 somaxsL, somaxsH = [np.zeros(n_dados_exp) for _ in range(2)]
@@ -263,39 +264,95 @@ yields_calc = np.zeros(n_dados_exp)
 
 # 5.3.4 - Cálculos das composições de ELL e yields de asfaltenos p/ cada i-ésimo dado experimental
 for i in range(n_dados_exp):
-    betasrr[i], xsL[i, :], xsH[i, :], n_it[i] = calcular_composições_ELL(T, xs_completo[i], deltas, Vs, xsagregados, MMs)
+    betas[i], xsL[i, :], xsH[i, :], n_it[i] = calcular_composições_ELL(T, xs_completo[i], deltas, Vs, xsagregados, MMs)
     somaxsL[i], somaxsH[i] = np.round(xsL[i, :].sum(), decimals=8), np.round(xsH[i, :].sum(), decimals=8)
-    yields_calc[i] = calcular_yield_asfaltenos(betasrr[i], xsL[i, :], xsH[i, :], MMs)
+    yields_calc[i] = calcular_yield_asfaltenos(betas[i], xsL[i, :], xsH[i, :], MMs)
 
 # ======================================================================================================================
-# PARTE 6 - EXIBIÇÃO DOS RESULTADOS
+# PARTE 6 - REGRESSÃO DOS DADOS CINÉTICOS
+
+if tipo_cálculo_cinética != "nao":
+
+    # 6.1 - Parâmetros do Modelo Cinético
+    # 6.1.1 - Relacionados ao Equilíbrio de Fases
+    w_solv = np.asarray(ws_simplificados[:, 0], dtype=float)
+    yields_eq = (yields_exp if np.any(yields_exp != 0) else yields_calc)
+    yield_max = yields_eq[-1]
+    w_onset = 0
+    for i_onset in range(len(yields_eq)):
+        if yields_eq[i_onset] > 0.005:
+            w_onset = w_solv[i_onset] if i_onset == 0 else w_solv[i_onset - 1]
+            break
+
+    # 6.1.2 - Parâmetros para Otimização
+    tempos = [2, 4, 6, 8, 16, 24]
+    parâmetros_cinéticos_1 = np.array([683.75, 0.030])  # Relacionados ao Equilíbrio de Fases
+    parâmetros_cinéticos_2 = np.array([5, -2])  # Relacionados ao Tempo
+
+    # 6.1.3 - Dados Experimentais Temporais (MATRIZ ZERO PARA TESTES)
+    yields_temp_exp = np.zeros((len(tempos), len(yields_eq)))
+
+    # 6.3 - Otimização dos Parâmetros Cinéticos de Tempo Infinito
+    if tipo_cálculo_cinética in ("regressao1", "regressao2"):
+        # 6.3.1 - Função Objetivo
+        def F_obj_1(parâmetros_opt, yields_eq, w_solv, w_onset, yield_max):
+            yields_t_inf = calcular_yield_tempo_infinito(w_solv, w_onset, yield_max, parâmetros_opt)
+            return np.mean(np.abs(yields_t_inf - yields_eq))
+
+        # 6.3.2 - Otimização dos Parâmetros
+        argumentos_F_obj_1 = (yields_otimização, w_solv, w_onset, yield_max)
+        sol_1 = scp.optimize.minimize(F_obj_1, parâmetros_cinéticos_1, method="Nelder-Mead", args=argumentos_F_obj_1)
+        parâmetros_cinéticos_1 = sol_1.x
+
+    # 6.4 - Otimização dos Parâmetros Cinéticos Temporais
+    if tipo_cálculo_cinética == "regressao2":
+        # 6.4.1 - Função Objetivo
+        def F_obj_2(parâmetros, tempos, yields_temp_exp, yield_max, parâmetros_t_inf, w_solv, w_onset):
+            yields_ts = calcular_yields_temporais(tempos, w_solv, w_onset, yield_max, parâmetros_t_inf, parâmetros)
+            return np.mean(np.abs(yields_ts - yields_temp_exp))
+
+        # 6.4.2 - Otimização dos Parâmetros
+        argumentos_F_obj_2 = (tempos, yields_temp_exp, yield_max, parâmetros_cinéticos_1, w_solv, w_onset)
+        sol_2 = scp.optimize.minimize(F_obj_2, parâmetros_cinéticos_2, method='Nelder-Mead', args=argumentos_F_obj_2)
+        parâmetros_cinéticos_2 = sol_2.x
+
+    # 6.5 - Predição do Modelo Cinético
+    yields_temp_calc = calcular_yields_temporais(
+        tempos, w_solv, w_onset, yield_max, parâmetros_cinéticos_1, parâmetros_cinéticos_2
+    )
+
+    # 6.5.1 - Criação do Gráfico de Curvas Cinéticas em diferentes tempos
+    plotar_yield_curves_cinéticas(w_solv, tempos, yields_exp, yields_temp_calc)
+
+# ======================================================================================================================
+# PARTE 7 - EXIBIÇÃO DOS RESULTADOS
  
-# 6.1 - Se há dados experimentais de yields para o sistema em questão... (Ex: Yanes_P1 e Yanes_P2)
+# 7.1 - Se há dados experimentais de yields para o sistema em questão... (Ex: Yanes_P1 e Yanes_P2)
 if any(yield_exp != 0 for yield_exp in yields_exp):
 
-    # 6.1.1 - Desvios absolutos (DAs) e médio dos desvios absolutos (DMA)
+    # 7.1.1 - Desvios absolutos (DAs) e médio dos desvios absolutos (DMA)
     DAs = np.abs(yields_exp - yields_calc)  # desvios absolutos fracionais
     DMA = np.mean(DAs)  # média dos desvios absolutos fracionais
 
-    # 6.1.2 - Criação de listas com os resultados formatados
+    # 7.1.2 - Criação de listas com os resultados formatados
     yields_exp_formatado = [f"{100*yield_exp:.2f}%" for yield_exp in yields_exp]
     yields_calc_formatado = [f"{100*yield_calc:.2f}%" for yield_calc in yields_calc]
-    betas_formatado = [f"{betarr:.4e}" for betarr in betasrr]
+    betas_formatado = [f"{beta:.4e}" for beta in betas]
     DAs_formatado = [f"{100*DA:.2f}%" for DA in DAs]
     DMA_formatado = f"{100*DMA:.4f}%"
 
-# 6.2 - Se não há dados experimentais de yields para o sistema em questão...
+# 7.2 - Se não há dados experimentais de yields para o sistema em questão...
 # (Ex: Yanes_P3, Tharanivasan_Lloydminster1 e Tharanivasan_Lloydminster2)
 else:
 
-    # 6.2.1 - Criação de listas com os resultados formatados
+    # 7.2.1 - Criação de listas com os resultados formatados
     yields_exp_formatado = ["nao disponivel" for yield_calc in yields_calc]
     yields_calc_formatado = [f"{100*yield_calc:.2f}%" for yield_calc in yields_calc]
-    betas_formatado = [f"{betarr:.4e}" for betarr in betasrr]
+    betas_formatado = [f"{beta:.4e}" for beta in betas]
     DAs_formatado = ["nao disponivel" for yield_calc in yields_calc]
     DMA_formatado = "nao disponivel"
 
-# 6.3 - Criação e impressão de Dataframe com os resultados
+# 7.3 - Criação e impressão de Dataframe com os resultados
 df_resultados = pd.DataFrame(
     {"  Fracao Solvente  ": ws_simplificados[:, 0],
      "  yield (exp.)  ": yields_exp_formatado,
@@ -307,11 +364,12 @@ df_resultados = pd.DataFrame(
      "  qte. iteracoes  ": list(map(int, n_it))}
      )
 print(f"\n| DESVIO MEDIO ABSOLUTO NOS YIELDS (%): {DMA_formatado}")
-if tipo_cálculo_programa == 'regressao':
+if tipo_cálculo_equilíbrio == 'regressao':
     print(f"PARAMETROS ESTIMADOS: {sol.x}")
     print(f"{tabulate(df_resultados, headers = df_resultados.columns, tablefmt = 'pretty', showindex = False)}")
 
-# 6.4 - Criação dos gráficos: yield curves e distribuição de massa molar
-informações_auxiliares = [DMA_formatado, tipo_cálculo_programa, tipo_regressão, algoritmo_otimização, nome_planilha]
+# 7.4 - Criação dos gráficos: yield curves e distribuição de massa molar
+informações_auxiliares = [DMA_formatado, tipo_cálculo_equilíbrio, tipo_regressão_equilíbrio,
+                          algoritmo_otimização, nome_planilha]
 plotar_yield_curves(ws_simplificados[:, 0], yields_exp, yields_calc, informações_auxiliares)
 plotar_distribuição_massa_molar(MMsagregados, xsagregados, alfa, MWavg, informações_auxiliares)

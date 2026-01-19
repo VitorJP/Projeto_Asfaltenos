@@ -62,7 +62,7 @@ def ler_variáveis_entrada_código(diretório):
         linhas = arquivo.readlines()
 
     # Armazenamento apenas das linhas que contém os valores das variáveis a serem lidas pelo programa principal
-    linhas_úteis = linhas[-23:-1]
+    linhas_úteis = linhas[-24:-1]
 
     # Removendo o nome da varíavel da linha
     linhas_úteis_valores = [linha.split(":", 1)[1] if ":" in linha else linha for linha in linhas_úteis]
@@ -89,10 +89,11 @@ def ler_variáveis_entrada_código(diretório):
     Alinha_delta_agregados = float(linhas_úteis_limpas[15])
     c_delta_agregados = float(linhas_úteis_limpas[16])
     d_delta_agregados = float(linhas_úteis_limpas[17])
-    tipo_cálculo_programa = linhas_úteis_limpas[18]
-    tipo_regressão = int(linhas_úteis_limpas[19])
-    algoritmo_otimização = int(linhas_úteis_limpas[20])
-    nome_planilha = linhas_úteis_limpas[21]
+    tipo_cálculo_equilíbrio = linhas_úteis_limpas[18]
+    tipo_cálculo_cinética = linhas_úteis_limpas[19]
+    tipo_regressão_equilibrio = int(linhas_úteis_limpas[20])
+    algoritmo_otimização = int(linhas_úteis_limpas[21])
+    nome_planilha = linhas_úteis_limpas[22]
 
     return (
         n_agregados, MWmin, MWmax, alfa, MWavg, tipo_cálculo_MM_agregados, método_integração_FDP_Gamma, 
@@ -101,7 +102,7 @@ def ler_variáveis_entrada_código(diretório):
         correlação_densidade_resinas, correlação_delta_resinas,
         correlação_densidade_agregados, correlação_delta_agregados, 
         Alinha_delta_agregados, c_delta_agregados, d_delta_agregados,
-        tipo_cálculo_programa, tipo_regressão, algoritmo_otimização,
+        tipo_cálculo_equilíbrio, tipo_cálculo_cinética, tipo_regressão_equilibrio, algoritmo_otimização,
         nome_planilha
         )
 

@@ -2,28 +2,20 @@
 import numpy as np
 import scipy as scp
 from scipy.constants import R  # m3*Pa/mol*K
-from pyswarms.single import GlobalBestPSO
-from itertools import combinations, permutations
 
 # Importação de outros módulos deste projeto
 from módulo_composições import normalizar_composição
 
 
-def cinética_de_precipitação(tempos, yield_eq_max, x_solv, parâmetros_cinéticos):
+def calcular_yield_tempo_infinito(x_solv, x_onset, yield_max, ks_x):
+    return yield_max / (1 + ks_x[0] * np.exp(-(x_solv - x_onset)/ks_x[1]))
 
-    k1, k2, k3, k4, k5 = parâmetros_cinéticos[0], parâmetros_cinéticos[1], parâmetros_cinéticos[2], \
-                         parâmetros_cinéticos[3], parâmetros_cinéticos[4]
 
-    tempo_eq = k1 * (x_solv ** k2)
-    yield_eq = yield_eq_max / (1 + k3 * np.exp(-(x_solv - k4)/k5))
-
-    yield_cinética = []
-    for t in tempos:
-        yield_t = yield_eq * (1 - np.exp(- t / tempo_eq))
-        yield_cinética.append(yield_t)
-    yield_cinética.append(yield_eq)
-
-    return np.array(yield_cinética)
+def calcular_yields_temporais(tempos, x_solv, x_onset, yield_max, ks_x, ks_t):
+    tempos = np.asarray(tempos)[:, None]
+    tau = ks_t[0] * (x_solv ** ks_t[1])
+    yields_t_inf = calcular_yield_tempo_infinito(x_solv, x_onset, yield_max, ks_x)
+    return yields_t_inf * (1 - np.exp(- tempos / tau))
 
 
 def fator_de_correção_de_Saidoun():
@@ -42,15 +34,18 @@ def deposição_cumulativa_asfaltenos():
 if __name__ == "__main__":
     from módulo_gráficos import plotar_yield_curves_cinéticas
 
-    par_cin = [5, -2, 2.987, 0.663, 0.030]
-    lista_tempos = [2, 4, 6, 8, 24]
-    max_yield_eq = 0.10
+    par_cin_tempo_infinito = [683.75, 0.030]
+    par_cin_temporais = [5, -2]
+    lista_t = [2, 4, 6, 8, 16, 24]
+    max_yield_eq, onset_x_value = 0.063419, 0.50
     lista_x_solv = np.linspace(0.05, 0.95)
-    curvas_yield_cinéticas = cinética_de_precipitação(lista_tempos, max_yield_eq, lista_x_solv, par_cin)
 
-    yield_experimental = np.zeros(len(lista_x_solv))
+    yields_t_infinito = calcular_yield_tempo_infinito(lista_x_solv, onset_x_value, max_yield_eq, par_cin_tempo_infinito)
+    yields_ao_longo_do_tempo = calcular_yields_temporais(lista_t, lista_x_solv, yields_t_infinito, par_cin_temporais)
 
-    plotar_yield_curves_cinéticas(lista_x_solv, lista_tempos, yield_experimental, curvas_yield_cinéticas)
+    yields_experimentais = np.zeros(len(lista_x_solv))
+
+    plotar_yield_curves_cinéticas(lista_x_solv, lista_t, yields_experimentais, yields_ao_longo_do_tempo)
 
 # FIM DO TESTE
 # ******************************************************************************************************************** #
