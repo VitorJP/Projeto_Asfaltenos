@@ -166,6 +166,30 @@ A seguir, são apresentadas as variáveis a serem lidas pelo programa principal:
 |                              |                                 | Obs: esta variável é útil apenas se                 |
 |                              |                                 |      'correlação_delta_agregados' = 'Barrera'       |
 +------------------------------+---------------------------------+-----------------------------------------------------+
+| Parâmetros Cinéticos         | kt1_cinético                    | valor do parâmetro kt1 adaptado do parâmetro b para |
+|                              |                                 | o cálculo de "tau" do modelo cinético conforme      |
+|                              |                                 | proposto por Jawad.                                 |
+|                              |                                 | Obs: esta variável é útil apenas se for realizado   |
+|                              |                                 |      cálculo de modelos cinéticos.                  |
+|                              +---------------------------------+-----------------------------------------------------|
+|                              | kt1_cinético                    | valor do parâmetro kt2 adaptado do parâmetro c para |
+|                              |                                 | o cálculo de "tau" do modelo cinético conforme      |
+|                              |                                 | proposto por Jawad.                                 |
+|                              |                                 | Obs: esta variável é útil apenas se for realizado   |
+|                              |                                 |      cálculo de modelos cinéticos.                  |
+|                              +---------------------------------+-----------------------------------------------------|
+|                              | kw1_cinético                    | valor do parâmetro kw1 adaptado dos parâmetros      |
+|                              |                                 | i, f, d para o cálculo de "C_A_infinito" do modelo  |
+|                              |                                 | cinético conforme proposto por Jawad.               |
+|                              |                                 | Obs: esta variável é útil apenas se for realizado   |
+|                              |                                 |      cálculo de modelos cinéticos.                  |
+|                              +---------------------------------+-----------------------------------------------------|
+|                              | kw2_cinético                    | valor do parâmetro kw2 adaptado do parâmetro d para |
+|                              |                                 | o cálculo de "C_A_infinito" do modelo cinético      |
+|                              |                                 | conforme proposto por Jawad.                        |
+|                              |                                 | Obs: esta variável é útil apenas se for realizado   |
+|                              |                                 |      cálculo de modelos cinéticos.                  |
++------------------------------+---------------------------------+-----------------------------------------------------+
 | Tomadas de decisão no MAIN   | tipo_cálculo_equilíbrio         | tipo de cálculo a ser executado pelo                |
 |                              |                                 | programa principal para o equilíbrio de fases       |
 |                              |                                 | opções: (predicao) Utiliza os parâmetros lidos      |
@@ -250,9 +274,13 @@ correlação_delta_agregados:Tharanivasan
 Alinha_delta_agregados:0
 c_delta_agregados:0.647
 d_delta_agregados:0.0495
+kt1_cinético:5
+kt2_cinético:-2
+kw1_cinético:683.75
+kw2_cinético:0.030
 tipo_cálculo_equilíbrio:regressao
 tipo_cálculo_cinética:regressao1
 tipo_regressão_equilibrio:2
 algoritmo_otimização:1
-nome_planilha:Tharanivasan_Lloydminster_hept
+nome_planilha:Yanes_P3
 +------------------------------+---------------------------------+-----------------------------------------------------+

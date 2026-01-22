@@ -33,8 +33,8 @@ diretório_do_txt = os.path.join(diretório_deste_módulo, 'variáveis_entrada_c
  correlação_densidade_resinas, correlação_delta_resinas,
  correlação_densidade_agregados, correlação_delta_agregados, 
  Alinha_delta_agregados, c_delta_agregados, d_delta_agregados,
- tipo_cálculo_equilíbrio, tipo_cálculo_cinética, tipo_regressão_equilíbrio,
- algoritmo_otimização,
+ kt1_cinético, kt2_cinético, kw1_cinético, kw2_cinético,
+ tipo_cálculo_equilíbrio, tipo_cálculo_cinética, tipo_regressão_equilíbrio, algoritmo_otimização,
  nome_planilha) = ler_variáveis_entrada_código(diretório_do_txt)
 
 # 1.2 - Validação dos valores das variáveis 'correlação_delta_agregados' e 'tipo_regressão'
@@ -286,8 +286,8 @@ if tipo_cálculo_cinética != "nao":
 
     # 6.1.2 - Parâmetros para Otimização
     tempos = [2, 4, 6, 8, 16, 24]
-    parâmetros_cinéticos_1 = np.array([683.75, 0.030])  # Relacionados ao Equilíbrio de Fases
-    parâmetros_cinéticos_2 = np.array([5, -2])  # Relacionados ao Tempo
+    parâmetros_cinéticos_w = np.array([kw1_cinético, kw2_cinético])  # Relacionados ao Equilíbrio de Fases
+    parâmetros_cinéticos_t = np.array([kt1_cinético, kt2_cinético])  # Relacionados ao Tempo
 
     # 6.1.3 - Dados Experimentais Temporais (MATRIZ ZERO PARA TESTES)
     yields_temp_exp = np.zeros((len(tempos), len(yields_eq)))
@@ -295,30 +295,30 @@ if tipo_cálculo_cinética != "nao":
     # 6.3 - Otimização dos Parâmetros Cinéticos de Tempo Infinito
     if tipo_cálculo_cinética in ("regressao1", "regressao2"):
         # 6.3.1 - Função Objetivo
-        def F_obj_1(params_opt, yields_eq, w_solv, w_onset, yield_max):
+        def F_obj_w(params_opt, yields_eq, w_solv, w_onset, yield_max):
             yields_t_inf = calcular_yield_tempo_infinito(w_solv, w_onset, yield_max, params_opt)
             return np.mean(np.abs(yields_t_inf - yields_eq))
 
         # 6.3.2 - Otimização dos Parâmetros
-        argumentos_F_obj_1 = (yields_eq, w_solv, w_onset, yield_max)
-        sol_1 = scp.optimize.minimize(F_obj_1, parâmetros_cinéticos_1, method="Nelder-Mead", args=argumentos_F_obj_1)
-        parâmetros_cinéticos_1 = sol_1.x
+        argumentos_F_obj_w = (yields_eq, w_solv, w_onset, yield_max)
+        sol_w = scp.optimize.minimize(F_obj_w, parâmetros_cinéticos_w, method="Nelder-Mead", args=argumentos_F_obj_w)
+        parâmetros_cinéticos_w = sol_w.x
 
     # 6.4 - Otimização dos Parâmetros Cinéticos Temporais
     if tipo_cálculo_cinética == "regressao2":
         # 6.4.1 - Função Objetivo
-        def F_obj_2(params_opt, ts, yields_temp_exp, yield_max, params_t_inf, w_solv, w_onset):
+        def F_obj_t(params_opt, ts, yields_temp_exp, yield_max, params_t_inf, w_solv, w_onset):
             yields_ts = calcular_yields_temporais(ts, w_solv, w_onset, yield_max, params_t_inf, params_opt)
             return np.mean(np.abs(yields_ts - yields_temp_exp))
 
         # 6.4.2 - Otimização dos Parâmetros
-        argumentos_F_obj_2 = (tempos, yields_temp_exp, yield_max, parâmetros_cinéticos_1, w_solv, w_onset)
-        sol_2 = scp.optimize.minimize(F_obj_2, parâmetros_cinéticos_2, method='Nelder-Mead', args=argumentos_F_obj_2)
-        parâmetros_cinéticos_2 = sol_2.x
+        argumentos_F_obj_t = (tempos, yields_temp_exp, yield_max, parâmetros_cinéticos_w, w_solv, w_onset)
+        sol_t = scp.optimize.minimize(F_obj_2, parâmetros_cinéticos_t, method='Nelder-Mead', args=argumentos_F_obj_2)
+        parâmetros_cinéticos_t = sol_t.x
 
     # 6.5 - Predição do Modelo Cinético
     yields_temp_calc = calcular_yields_temporais(
-        tempos, w_solv, w_onset, yield_max, parâmetros_cinéticos_1, parâmetros_cinéticos_2
+        tempos, w_solv, w_onset, yield_max, parâmetros_cinéticos_w, parâmetros_cinéticos_t
     )
 
     # 6.6 - Criação do Gráfico de Curvas Cinéticas em diferentes tempos
