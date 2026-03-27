@@ -10,13 +10,14 @@ from tabulate import tabulate
 
 # 0.2 - Módulos 
 from módulo_leitura_dados import ler_variáveis_entrada_código, ler_dados_experimentais
-from módulo_composições import normalizar_composição, fracionar_composição_global
+from módulo_composições import normalizar_composição, fracionar_composição_SARA
 from módulo_propriedades_solvente import calcular_propriedades_solvente
 from módulo_propriedades_frações_SAR import calcular_propriedades_saturados, calcular_propriedades_aromáticos, \
     calcular_propriedades_resinas
 from módulo_distribuição_massa_molar import gerar_distribuição_massa_molar
 from módulo_propriedades_agregados import calcular_propriedades_agregados
-from módulo_equilíbrio_líquido_líquido import calcular_composições_ELL, calcular_yield_asfaltenos
+from módulo_equilíbrio_líquido_líquido import calcular_ELL, calcular_yield_asfaltenos
+from módulo_equilíbrio_multifásico import calcular_equilíbrio_multifásico
 from módulo_análise_cinética import calcular_yield_tempo_infinito, calcular_yields_temporais
 from módulo_gráficos import plotar_yield_curves, plotar_distribuição_massa_molar, plotar_yield_curves_cinéticas
 
@@ -118,7 +119,7 @@ if tipo_cálculo_equilíbrio == 'regressao':
         Vs[4:4 + n_agregados] = Vsagregados[0:n_agregados] 
         
         # 3.5 - Composição global do sistema em termos de [Solvente, S, A, R, Asf0, Asf1, ...] (base mássica e molar)
-        ws_completo, xs_completo = fracionar_composição_global(ws_simplificados, SARA, wsagregados, MMs)
+        ws_completo, xs_completo = fracionar_composição_SARA(ws_simplificados, SARA, wsagregados, MMs)
         ws_completo = np.apply_along_axis(func1d=normalizar_composição, axis=1, arr=ws_completo)
         xs_completo = np.apply_along_axis(func1d=normalizar_composição, axis=1, arr=xs_completo)
 
@@ -126,7 +127,7 @@ if tipo_cálculo_equilíbrio == 'regressao':
         n_dados_exp = yields_exp.shape[0]
         yields_calc = np.zeros(n_dados_exp)
         for i_comp in range(n_dados_exp):
-            betarr, xsL, xsH, n_it = calcular_composições_ELL(T, xs_completo[i_comp], deltas, Vs, xsagregados, MMs)
+            betarr, xsL, xsH, n_it = calcular_ELL(T, xs_completo[i_comp], deltas, Vs, xsagregados, MMs)
             yields_calc[i_comp] = calcular_yield_asfaltenos(betarr, xsL, xsH, MMs)
 
         # 3.7 - Expressão matemática a ser minimizada
@@ -241,7 +242,7 @@ deltas[4:4 + n_agregados] = deltasagregados[0:n_agregados]
 Vs[4:4 + n_agregados] = Vsagregados[0:n_agregados] 
 
 # 5.2 - COMPOSIÇÃO GLOBAL DO SISTEMA EM TERMOS DE [Solvente, S, A, R, Asf0, Asf1, ...] (base mássica e base molar)
-ws_completo, xs_completo = fracionar_composição_global(ws_simplificados, SARA, wsagregados, MMs)
+ws_completo, xs_completo = fracionar_composição_SARA(ws_simplificados, SARA, wsagregados, MMs)
 ws_completo = np.apply_along_axis(func1d=normalizar_composição, axis=1, arr=ws_completo)
 # normalização das frações mássicas de cada linha
 xs_completo = np.apply_along_axis(func1d=normalizar_composição, axis=1, arr=xs_completo)
@@ -263,10 +264,15 @@ n_it = np.zeros(n_dados_exp)  # nº de iterações
 yields_calc = np.zeros(n_dados_exp)
 
 # 5.3.4 - Cálculos das composições de ELL e yields de asfaltenos p/ cada i-ésimo dado experimental
-for i in range(n_dados_exp):
-    betas[i], xsL[i, :], xsH[i, :], n_it[i] = calcular_composições_ELL(T, xs_completo[i], deltas, Vs, xsagregados, MMs)
-    somaxsL[i], somaxsH[i] = np.round(xsL[i, :].sum(), decimals=8), np.round(xsH[i, :].sum(), decimals=8)
-    yields_calc[i] = calcular_yield_asfaltenos(betas[i], xsL[i, :], xsH[i, :], MMs)
+
+# TESTES DE RECURSIVIDADE:
+# beta_test, xs_L_test, xs_H_test, n_it_test = calcular_ELL(T, xs_completo[-1], deltas, Vs, xsagregados, MMs)
+beta_test, xs_fases_test, i_asf_test = calcular_equilíbrio_multifásico(T, xs_completo[-1], deltas, Vs, MMs, xsagregados)
+
+# for i in range(n_dados_exp):
+#     betas[i], xsL[i, :], xsH[i, :], n_it[i] = calcular_ELL(T, xs_completo[i], deltas, Vs, xsagregados, MMs)
+#     somaxsL[i], somaxsH[i] = np.round(xsL[i, :].sum(), decimals=8), np.round(xsH[i, :].sum(), decimals=8)
+#     yields_calc[i] = calcular_yield_asfaltenos(betas[i], xsL[i, :], xsH[i, :], MMs)
 
 # ======================================================================================================================
 # PARTE 6 - REGRESSÃO DOS DADOS CINÉTICOS
@@ -331,52 +337,45 @@ if tipo_cálculo_cinética != "nao":
     informações_auxiliares = [tipo_cálculo_cinética, nome_planilha]
     plotar_yield_curves_cinéticas(w_solv, tempos, yields_exp, yields_temp_exp, yields_temp_calc, informações_auxiliares)
 
-# ======================================================================================================================
+# ==================================================================================================================== #
 # PARTE 7 - EXIBIÇÃO DOS RESULTADOS
- 
-# 7.1 - Se há dados experimentais de yields para o sistema em questão... (Ex: Yanes_P1 e Yanes_P2)
-if any(yield_exp != 0 for yield_exp in yields_exp):
-
-    # 7.1.1 - Desvios absolutos (DAs) e médio dos desvios absolutos (DMA)
-    DAs = np.abs(yields_exp - yields_calc)  # desvios absolutos fracionais
-    DMA = np.mean(DAs)  # média dos desvios absolutos fracionais
-
-    # 7.1.2 - Criação de listas com os resultados formatados
-    yields_exp_formatado = [f"{100*yield_exp:.2f}%" for yield_exp in yields_exp]
-    yields_calc_formatado = [f"{100*yield_calc:.2f}%" for yield_calc in yields_calc]
-    betas_formatado = [f"{beta:.4e}" for beta in betas]
-    DAs_formatado = [f"{100*DA:.2f}%" for DA in DAs]
-    DMA_formatado = f"{100*DMA:.4f}%"
-
-# 7.2 - Se não há dados experimentais de yields para o sistema em questão...
-# (Ex: Yanes_P3, Tharanivasan_Lloydminster1 e Tharanivasan_Lloydminster2)
-else:
-
-    # 7.2.1 - Criação de listas com os resultados formatados
-    yields_exp_formatado = ["nao disponivel" for yield_calc in yields_calc]
-    yields_calc_formatado = [f"{100*yield_calc:.2f}%" for yield_calc in yields_calc]
-    betas_formatado = [f"{beta:.4e}" for beta in betas]
-    DAs_formatado = ["nao disponivel" for yield_calc in yields_calc]
-    DMA_formatado = "nao disponivel"
-
-# 7.3 - Criação e impressão de Dataframe com os resultados
-df_resultados = pd.DataFrame(
-    {"  Fracao Solvente  ": ws_simplificados[:, 0],
-     "  yield (exp.)  ": yields_exp_formatado,
-     "  yield (calc.)  ": yields_calc_formatado,
-     "  DA (%)  ": DAs_formatado,
-     "  Beta  ": betas_formatado,
-     "  somaxsL  ": somaxsL,
-     "  somaxsH  ": somaxsH,
-     "  qte. iteracoes  ": list(map(int, n_it))}
-     )
-print(f"\n| DESVIO MEDIO ABSOLUTO NOS YIELDS (%): {DMA_formatado}")
-if tipo_cálculo_equilíbrio == 'regressao':
-    print(f"PARAMETROS ESTIMADOS: {sol.x}")
-    print(f"{tabulate(df_resultados, headers = df_resultados.columns, tablefmt = 'pretty', showindex = False)}")
-
-# 7.4 - Criação dos gráficos: yield curves e distribuição de massa molar
-informações_auxiliares = [DMA_formatado, tipo_cálculo_equilíbrio, tipo_regressão_equilíbrio,
-                          algoritmo_otimização, nome_planilha]
-plotar_yield_curves(ws_simplificados[:, 0], yields_exp, yields_calc, SARA[-1], informações_auxiliares)
-plotar_distribuição_massa_molar(MMsagregados, xsagregados, alfa, MWavg, informações_auxiliares)
+#
+# # 7.1 - Criação dos dados de desvios para o sistema
+# # 7.1.1 - Se há dados experimentais de yields para o sistema em questão
+# no_experimental_data = True if all(yield_exp == 0 for yield_exp in yields_exp) else False
+#
+# # 7.1.2 - Criação de listas com os resultados formatados
+# DAs = None if no_experimental_data else np.abs(yields_exp - yields_calc)  # desvios absolutos fracionais
+# DMA = None if no_experimental_data else np.mean(DAs)  # média dos desvios absolutos fracionais
+#
+# DAs_formatado = ["nao disponivel" for yield_calc in yields_calc] if no_experimental_data \
+#     else [f"{100*DA:.2f}%" for DA in DAs]
+# DMA_formatado = "nao disponivel" if no_experimental_data else f"{100*DMA:.4f}%"
+#
+# yields_exp_formatado = ["nao disponivel" for yield_calc in yields_calc] if no_experimental_data \
+#     else [f"{100*yield_exp:.2f}%" for yield_exp in yields_exp]
+# yields_calc_formatado = [f"{100*yield_calc:.2f}%" for yield_calc in yields_calc]
+# betas_formatado = [f"{beta:.4e}" for beta in betas]
+#
+# # 7.2 - Criação e impressão de Dataframe com os resultados
+# df_resultados = pd.DataFrame(
+#     {"  Fracao Solvente  ": ws_simplificados[:, 0],
+#      "  yield (exp.)  ": yields_exp_formatado,
+#      "  yield (calc.)  ": yields_calc_formatado,
+#      "  DA (%)  ": DAs_formatado,
+#      "  Beta  ": betas_formatado,
+#      "  somaxsL  ": somaxsL,
+#      "  somaxsH  ": somaxsH,
+#      "  qte. iteracoes  ": list(map(int, n_it))}
+#      )
+# print(f"\n| DESVIO MEDIO ABSOLUTO NOS YIELDS (%): {DMA_formatado}")
+# if tipo_cálculo_equilíbrio == 'regressao':
+#     print(f"PARAMETROS ESTIMADOS: {sol.x}")
+#     print(f"{tabulate(df_resultados, headers = df_resultados.columns, tablefmt = 'pretty', showindex = False)}")
+#
+# # 7.3 - Criação dos gráficos: yield curves e distribuição de massa molar
+# informações_auxiliares = [DMA_formatado, tipo_cálculo_equilíbrio, tipo_regressão_equilíbrio,
+#                           algoritmo_otimização, nome_planilha]
+# plotar_yield_curves(ws_simplificados[:, 0], yields_exp, yields_calc, SARA[-1], informações_auxiliares)
+# plotar_distribuição_massa_molar(MMsagregados, xsagregados, alfa, MWavg, informações_auxiliares)
+# ==================================================================================================================== #

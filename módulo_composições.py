@@ -14,13 +14,16 @@ def normalizar_composição(frações):
     """
 
     # Cálculo
-    frações_normalizadas = frações*(1/frações.sum())
+    if frações.sum() >= 1e-12:
+        frações_normalizadas = frações*(1/frações.sum())
+    else:
+        frações_normalizadas = np.zeros_like(frações)
 
     return frações_normalizadas
 
 
 # Função
-def fracionar_composição_global(ws_simplificados, SARA, wsagregados, MMs):
+def fracionar_composição_SARA(ws_simplificados, SARA, wsagregados, MMs):
     """ Fragmenta a composição do sistema de [Solvente, Petróleo] para [Solvente, S, A, R, Asf0, Asf1, ...] 
     
     Inputs:
@@ -56,6 +59,23 @@ def fracionar_composição_global(ws_simplificados, SARA, wsagregados, MMs):
     xs_completo = xs_completo/xs_completo.sum(axis=1, keepdims=True)
 
     return ws_completo, xs_completo
+
+
+def simplificar_composição_SARA(frações_completo):
+    """
+    Simplifica a composição do sistema de [Solvente, S, A, R, Asf0, Asf1, ...] para [Solvente, S, A, R, Asf_total]
+
+        Inputs:
+            frações_completo (array)      : composição em termos de [Solvente, S, A, R, Asf0, Asf1, ...]
+
+        Outputs:
+            frações_simplificado (array)  : composição em termos de [Solvente, S, A, R, Asf_total]
+    """
+
+    frações_simplificado = np.zeros(5)
+    frações_simplificado[:4] = frações_completo[:4]
+    frações_simplificado[4] = np.sum(frações_completo[4:])
+    return frações_simplificado
 
 
 # ******************************************************************************************************************** #

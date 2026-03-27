@@ -2,8 +2,8 @@
 import numpy as np
 import scipy as scp
 from scipy.constants import R  # m3*Pa/mol*K
-from pyswarms.single import GlobalBestPSO
 from itertools import combinations, permutations
+# import chemicals
 
 # Importação de outros módulos deste projeto
 from módulo_composições import normalizar_composição
@@ -55,21 +55,8 @@ def calcular_ln_coeficiente(xs, dados_modelo_termodinâmico):
             termo_3 = (Vs / (R * T)) * (deltas - deltam) ** 2
             ln_coeficiente = (1 - termo_1) + termo_2 + termo_3
 
-        else:  # Em caso de Erro, usar Flory-Huggins como padrão.
-            T, Vs, deltas = parâmetros_modelo[0], parâmetros_modelo[1], parâmetros_modelo[2]
-
-            # Volume Médio da Fase:
-            Vm = (xs * Vs).sum()
-
-            # Parâmetro de Solubilidade Médio da Fase:
-            phis_fase = (xs * Vs) / Vm
-            deltam = (phis_fase * deltas).sum()
-
-            # ln do coeficiente de fugacidade
-            termo_1 = np.clip((Vs / Vm), 1e-16, None)
-            termo_2 = np.log(termo_1)
-            termo_3 = (Vs / (R * T)) * (deltas - deltam) ** 2
-            ln_coeficiente = (1 - termo_1) + termo_2 + termo_3
+        else:
+            raise ValueError("Modelo não implementado.")
     else:
         ln_coeficiente = 0
 
@@ -153,7 +140,7 @@ def calcular_Delta_G_sistema(beta_a, xs_2a, xs_2b, xs_1, dados_modelo_termodinâ
 
 # ==================================================================================================================== #
 # Subfunção: Equação de Rachford-Rice
-def calcular_beta_rachford_rice(Ks, zs):
+def calcular_beta_rachford_rice(Ks, zs, tol=1e-8):
     """ Calcula a proporção de fase pesada (beta) no sistema pelo método de Rachford-Rice.
 
             Inputs:
@@ -169,7 +156,6 @@ def calcular_beta_rachford_rice(Ks, zs):
     def equação_rachford_rice(beta_rr):
         return (zs * (Ks - 1) / (1 + beta_rr * (Ks - 1))).sum()
 
-    tol = 1e-8
     limite_inferior_beta, limite_superior_beta = tol, 1 - tol
 
     if equação_rachford_rice(limite_inferior_beta) * equação_rachford_rice(limite_superior_beta) < 0:
@@ -218,7 +204,7 @@ def calcular_composições_fases(Ks, zs, beta):
 
 
 # Função: Cálculo Flash por Aplicação de Rachford-Rice
-def calcular_flash(ws, zs, dados_modelo_termodinâmico):
+def calcular_flash(ws, zs, dados_modelo_termodinâmico, tol=1e-8, n_it_max=50):
     """ Calcula as frações das fases leve e pesada e a proporção de fase pesasa (beta) por iterações sucessivas
         a partir de um chute inicial de fase pesada.
 
@@ -241,40 +227,37 @@ def calcular_flash(ws, zs, dados_modelo_termodinâmico):
     """
 
     Ks = np.empty_like(ws, dtype=float)
-    mask = zs >= 1e-8
+    mask = zs >= tol
     Ks[mask] = ws[mask] / zs[mask]
     Ks[~mask] = 1.0
-    Ks[Ks < 1e-6] = 0.0
+    Ks[Ks < tol] = 0.0
 
-    tol, erro = 1e-8, 1
-    n_it, n_it_max = 0, 50
-
-    while erro > tol:
-        s, beta = calcular_beta_rachford_rice(Ks, zs)
+    for n_it in range(n_it_max):
+        _, beta = calcular_beta_rachford_rice(Ks, zs)
         xs_L, xs_H = calcular_composições_fases(Ks, zs, beta)
 
         ln_Ks_post = calcular_ln_coeficiente(xs_L, dados_modelo_termodinâmico) \
                      - calcular_ln_coeficiente(xs_H, dados_modelo_termodinâmico)
         ln_Ks_post = np.clip(ln_Ks_post, None, np.log(1e6))
         Ks_post = np.where(zs == 0, 1.0, np.exp(ln_Ks_post))
-        Ks_post[Ks < 1e-6] = 0.0
+        Ks_post[Ks < tol] = 0.0
 
         # Critério de Convergência
         erro = np.sum(np.abs(Ks_post - Ks) / (1 + Ks))
         Ks = Ks_post
 
-        n_it += 1
-        if n_it >= n_it_max:
-            # print(f"O método de Rachford-Rice não convergiu em {n_it} iterações. O erro final foi {erro}.")
+        if erro <= tol:
             break
+        if n_it >= n_it_max:
+            print(f"O método de Rachford-Rice não convergiu em {n_it} iterações. O erro final foi {erro}.")
 
-    duas_fases, beta = calcular_beta_rachford_rice(Ks, zs)
-    if duas_fases:
+    particiona_em_duas_fases, beta = calcular_beta_rachford_rice(Ks, zs)
+    if particiona_em_duas_fases:
         xs_L, xs_H = calcular_composições_fases(Ks, zs, beta)
     else:
         xs_L, xs_H = zs, zs
 
-    return duas_fases, beta, xs_L, xs_H, n_it
+    return particiona_em_duas_fases, beta, xs_L, xs_H, n_it
 
 
 # ==================================================================================================================== #
@@ -358,13 +341,36 @@ def criar_conjunto_composições_candidatas(zs, xs_agregados):
     conjunto_composições_candidatas.extend(distribuição_dirichlet(n_componentes))
     conjunto_composições_candidatas = np.array(conjunto_composições_candidatas)
     n_candidatas = conjunto_composições_candidatas.shape[0]
-    print('n candidatas:', n_candidatas)
 
     return conjunto_composições_candidatas
 
 
+# Subfunção
+def printar_dados(zs, T, G_opt, beta_opt, xs_L_opt, xs_H_opt, MMs, duas_fases):
+    n_beta = xs_H_opt * beta_opt
+    m_beta = n_beta * MMs
+    m_beta_total = m_beta[1:].sum()
+    n_z = zs
+    m_z = n_z * MMs
+    m_z_total = m_z[1:].sum()
+
+    m_beta_rel = m_beta_total / m_z_total
+
+    print("duas fases?", duas_fases)
+    print("Temperatura: ", (T - 273.15), " °C")
+    print("fração solvente: ", zs[0])
+    print("beta: ", beta_opt)
+    print("m_fase_beta(%): ", m_beta_rel)
+    print("xs_fase_beta: ", xs_H_opt)
+    print("xs_fase_0: ", xs_L_opt)
+    print("zs: ", zs)
+    print("G x10³: ", 1000 * G_opt)
+    print()
+
+
+# ==================================================================================================================== #
 # Função
-def análise_de_estabilidade(ws_candidatas, zs, dados_modelo_termodinâmico):
+def verificação_de_instabilidade(conjunto_xs_candidatas, xs_fase_preliminar, dados_modelo_termodinâmico):
     """ Calcula o beta da proporção entre as fases e as composições das fases leve e pesada (base molar).
 
                 Inputs:
@@ -384,11 +390,13 @@ def análise_de_estabilidade(ws_candidatas, zs, dados_modelo_termodinâmico):
     """
 
     instabilidade_detectada = False
-    for ws in ws_candidatas:
-        tpd_ws = calcular_tpd(ws, zs, dados_modelo_termodinâmico)
-        if tpd_ws < 0:
+
+    for xs_fase_candidata in conjunto_xs_candidatas:
+        tpd = calcular_tpd(xs_fase_candidata, xs_fase_preliminar, dados_modelo_termodinâmico)
+        if tpd < 0.0:
             instabilidade_detectada = True
             break
+
     return instabilidade_detectada
 
 
@@ -416,7 +424,6 @@ def identificar_composição_com_G_mínimo(ws_candidatas, zs, dados_modelo_termo
 
     resultados = []
     for ws in ws_candidatas:
-
         # Cálculo Flash
         duas_fases, beta, xs_L, xs_H, n_it = calcular_flash(ws, zs, dados_modelo_termodinâmico)
 
@@ -440,11 +447,13 @@ def identificar_composição_com_G_mínimo(ws_candidatas, zs, dados_modelo_termo
     i_rel = np.argmin(casos_válidos)  # índice relativo dentro dos válidos
     i_abs = np.where(duas_fases)[0][i_rel]  # índice absoluto no array completo
 
-    return duas_fases[i_abs], beta[i_abs], xs_L[i_abs], xs_H[i_abs], n_it[i_abs]
+    print("composição escolhida: ", ws_candidatas[i_abs])
+
+    return Delta_G[i_abs], beta[i_abs], xs_L[i_abs], xs_H[i_abs], n_it[i_abs]
 
 
 # Função
-def calcular_composições_ELL(T, zs, deltas, Vs, xsagregados, MMs):
+def calcular_ELL(T, zs, deltas, Vs, xsagregados, MMs):
     """ Calcula o beta da proporção entre as fases e as composições das fases leve e pesada (base molar).
 
         Inputs:
@@ -470,6 +479,9 @@ def calcular_composições_ELL(T, zs, deltas, Vs, xsagregados, MMs):
     zs[zs < 1e-8] = 0
     zs = normalizar_composição(zs)
 
+    xsagregados[xsagregados < 1e-8] = 0
+    xsagregados = normalizar_composição(xsagregados)
+
     # Declaração do Dicionário do Modelo Termodinâmico
     dados_modelo_termodinamico = {
         "modelo": "Flory-Huggins",  # Escolha do Modelo
@@ -478,7 +490,7 @@ def calcular_composições_ELL(T, zs, deltas, Vs, xsagregados, MMs):
 
     chute_inicial_asfaltenico, printar = True, False
 
-    # Método de indiciação do chute inicial
+    # Método de iniciação do chute inicial
     if chute_inicial_asfaltenico:
         ws_inicial = np.zeros(len(zs))
         ws_inicial[4:] = xsagregados
@@ -488,33 +500,17 @@ def calcular_composições_ELL(T, zs, deltas, Vs, xsagregados, MMs):
     # Método do conjunto de chutes iniciais
     else:
         ws_candidatas = criar_conjunto_composições_candidatas(zs, xsagregados)
-        sistema_é_instável = análise_de_estabilidade(ws_candidatas, zs, dados_modelo_termodinamico)
+        sistema_é_instável = verificação_de_instabilidade(ws_candidatas, zs, dados_modelo_termodinamico)
         if sistema_é_instável:
-            duas_fases, beta_opt, xs_L_opt, xs_H_opt, n_iter = identificar_composição_com_G_mínimo(
+            G_opt, beta_opt, xs_L_opt, xs_H_opt, n_iter = identificar_composição_com_G_mínimo(
                 ws_candidatas, zs, dados_modelo_termodinamico
             )
         else:
-            duas_fases, beta_opt, xs_L_opt, xs_H_opt, n_iter = False, 0.0, zs, zs, 0
-        G_opt = calcular_Delta_G_sistema(beta_opt, xs_H_opt, xs_L_opt, zs, dados_modelo_termodinamico)
-
-    n_beta = xs_H_opt * beta_opt
-    m_beta = n_beta * MMs
-    m_beta_total = m_beta[1:].sum()
-    n_z = zs
-    m_z = n_z * MMs
-    m_z_total = m_z[1:].sum()
-
-    m_beta_rel = m_beta_total / m_z_total
+            G_opt, beta_opt, xs_L_opt, xs_H_opt, n_iter = 0.0, 0.0, zs, zs, 0
+        duas_fases = True if G_opt <= 0.0 else False
 
     if printar:
-        print("duas fases?", duas_fases)
-        print("beta: ", beta_opt)
-        print("m_fase_beta(%): ", m_beta_rel)
-        print("xs_fase_beta: ", xs_H_opt)
-        print("xs_fase_0: ", xs_L_opt)
-        print("zs: ", zs)
-        print("G x10³: ", 1000*G_opt)
-        print()
+        printar_dados(zs, T, G_opt, beta_opt, xs_L_opt, xs_H_opt, MMs, duas_fases)
 
     return beta_opt, xs_L_opt, xs_H_opt, n_iter
 
@@ -546,13 +542,10 @@ def calcular_yield_asfaltenos(betarr, xsL, xsH, MMs):
     # Massa de petróleo nas fase leve, fase pesada e alimentação
     m_petróleo_L = msL[1:].sum()  # tirando o solvente
     m_petróleo_H = msH[1:].sum()  # tirando o solvente (teoricamente, não há solvente na fase pesada)
-    m_petróleo = m_petróleo_L + m_petróleo_H  # kg
-
-    # Massa de asfalteno na fase pesada
-    m_asfaltenos_H = msH[1:].sum()
 
     # Yield
-    yield_calc = m_asfaltenos_H / m_petróleo
+    yield_calc = m_petróleo_H / (m_petróleo_L + m_petróleo_H)
+    print(yield_calc)
 
     return yield_calc
 

@@ -22,14 +22,13 @@ def plotar_yield_curves(ws_solvente, yields_exp, yields_calc, yield_max, informa
 
     # Desempacotando a lista 'informações_auxiliares'
     DMA_formatado, tipo_cálculo, tipo_regressão, algoritmo_otimização, nome_planilha = informações_auxiliares
-    ymax = 20 if max(yield_max, yields_exp[-1], yields_calc[-1]) > 0.10 else 10
+    ymax = 10 * ((max(yield_max, max(yields_exp), max(yields_calc)) // 0.10) + 1)
 
     # Título
     plt.title(f"YIELD CURVE - DMA(%): {DMA_formatado}", fontsize=16, fontweight="bold")
 
     # Série de dados experimentais
-    # Obs: se todos os yields experimentais são nulos,
-    #      a curva experimental é plotada na cor branca (desaparece)
+    # Obs: se todos os yields experimentais são nulos, a curva experimental é plotada na cor branca (desaparece)
     if all(yield_exp == 0 for yield_exp in yields_exp):
         plt.plot(100*ws_solvente, 100*yields_exp, "o", mfc="white", mec="white", markersize=10)
     if any(yield_exp != 0 for yield_exp in yields_exp):
@@ -163,8 +162,7 @@ def plotar_yield_curves_cinéticas(ws_solvente, tempos, yields_exp, yields_ciné
     plt.title("YIELD CURVES - TIME ANALYSIS")
 
     # Série de dados experimentais
-    # Obs: se todos os yields experimentais são nulos,
-    #      a curva experimental é plotada na cor branca (desaparece)
+    # Obs: se todos os yields experimentais são nulos, a curva experimental é plotada na cor branca (desaparece)
     # if all(yield_exp == 0 for yield_exp in yields_exp):
     #     plt.plot(100 * ws_solvente, 100 * yields_exp, "o", mfc="white", mec="white", markersize=10)
     # if any(yield_exp != 0 for yield_exp in yields_exp):

@@ -260,7 +260,7 @@ n_agregados:30
 MWmin:1800
 MWmax:30000
 alfa:3.5
-MWavg:3620.0
+MWavg:3620
 tipo_cálculo_MM_agregados:medio
 método_integração_FDP_Gamma:trapezios
 correlação_densidade_saturados:Akbarzadeh
@@ -278,9 +278,9 @@ kt1_cinético:5
 kt2_cinético:-2
 kw1_cinético:683.75
 kw2_cinético:0.030
-tipo_cálculo_equilíbrio:regressao
-tipo_cálculo_cinética:regressao2
+tipo_cálculo_equilíbrio:predicao
+tipo_cálculo_cinética:nao
 tipo_regressão_equilibrio:2
 algoritmo_otimização:1
-nome_planilha:Rolim_A
+nome_planilha:Tharanivasan_L_hept
 +------------------------------+---------------------------------+-----------------------------------------------------+
