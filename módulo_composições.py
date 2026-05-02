@@ -48,11 +48,11 @@ def fracionar_composição_SARA(ws_simplificados, SARA, wsagregados, MMs):
 
     # Composição dos sistemas em termos de [Solvente, S, A, R, A] (base mássica)
     ws_semicompleto[:, 0] = ws_simplificados[:, 0]
-    ws_semicompleto[:, 1:5] = ws_simplificados[:, [1]]*SARA
+    ws_semicompleto[:, 1:5] = ws_simplificados[:, [1]] * SARA
 
     # Composição dos sistemas em termos de [Solvente, S, A, R, Asf0, Asf1, ...] (base mássica)
     ws_completo[:, 0:4] = ws_semicompleto[:, 0:4]
-    ws_completo[:, 4:] = ws_semicompleto[:, [4]]*wsagregados
+    ws_completo[:, 4:] = ws_semicompleto[:, [4]] * wsagregados
 
     # Composição dos sistemas em termos de [Solvente, S, A, R, Asf0, Asf1, ...] (base molar)
     xs_completo = ws_completo/MMs  
@@ -76,6 +76,16 @@ def simplificar_composição_SARA(frações_completo):
     frações_simplificado[:4] = frações_completo[:4]
     frações_simplificado[4] = np.sum(frações_completo[4:])
     return frações_simplificado
+
+
+def converter_fração_molar_para_fração_volumétrica(xs, Vs):
+    phis = xs * Vs[None, :] / (xs * Vs[None, :]).sum(axis=1, keepdims=True)
+    return phis
+
+
+def converter_fração_mássica_para_fração_volumétrica(ws, rhos):
+    phis = (ws / rhos[None, :]) / (ws / rhos[None, :]).sum(axis=1, keepdims=True)
+    return phis
 
 
 # ******************************************************************************************************************** #

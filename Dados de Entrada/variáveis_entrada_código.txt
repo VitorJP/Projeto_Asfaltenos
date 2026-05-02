@@ -221,8 +221,17 @@ A seguir, são apresentadas as variáveis a serem lidas pelo programa principal:
 |                              |                                 |                      como chutes para todos os      |
 |                              |                                 |                      parâmetros cinéticos a serem   |
 |                              |                                 |                      estimados                      |
-|                              +---------------------------------+-----------------------------------------------------+
-|                              | tipo_regressão_equilibrio       | define quais parâmetros serão regredidos pelo       |
+|                              +---------------------------------+-----------------------------------------------------|
+|                              | x_da_yield_curve                | variáveis para o eixo x do gráfico de yield curve   |
+|                              |                                 | plotado pelo programa na etapa de exibição dos      |
+|                              |                                 | resultados                                          |
+|                              |                                 | opções: (molar)      Fração molar de alcano         |
+|                              |                                 |         (mass)       Fração mássica de alcano       |
+|                              |                                 |         (volume)     Fração volumétrica de alcano   |
+|                              |                                 |         (solubility) Parâmetro de solubilidade da   |
+|                              |                                 |                      fase líquida/óleo sobrenadante |
++------------------------------+---------------------------------+-----------------------------------------------------+
+| Regressão dos parâmetros     | tipo_regressão_equilibrio       | define quais parâmetros serão regredidos pelo       |
 |                              |                                 | programa principal na seção de equilíbrio de fases  |
 |                              |                                 | opções: (1) MWavg                                   |
 |                              |                                 |         (2) MWavg, alfa                             |
@@ -234,8 +243,8 @@ A seguir, são apresentadas as variáveis a serem lidas pelo programa principal:
 |                              |                                 |             d_delta_agregados                       |
 |                              |                                 | Obs: esta variável é útil apenas se                 |
 |                              |                                 |      'tipo_cálculo_programa' = 'regressao'          |
-+------------------------------+---------------------------------+-----------------------------------------------------+
-| Regressão dos parâmetros     | algoritmo_otimização            | algoritmo numérico de regressão dos parâmetros      |
+|                              +---------------------------------+-----------------------------------------------------+
+|                              | algoritmo_otimização            | algoritmo numérico de regressão dos parâmetros      |
 |                              |                                 | opções: (1) Nelder-Mead                             |
 |                              |                                 |         (2) Brute-force com resultado servindo de   |
 |                              |                                 |             chute inicial para Nelder-Mead          |
@@ -278,9 +287,10 @@ kt1_cinético:5
 kt2_cinético:-2
 kw1_cinético:683.75
 kw2_cinético:0.030
-tipo_cálculo_equilíbrio:predicao
+tipo_cálculo_equilíbrio:regressao
 tipo_cálculo_cinética:nao
+x_da_yield_curve:solubility
 tipo_regressão_equilibrio:2
 algoritmo_otimização:1
-nome_planilha:Tharanivasan_L_hept
+nome_planilha:Tharanivasan_L_pent
 +------------------------------+---------------------------------+-----------------------------------------------------+

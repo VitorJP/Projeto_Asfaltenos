@@ -1,10 +1,10 @@
 # Função 
-def calcular_propriedades_solvente(T, solvente):
-    """ Calcula as propriedades do solvente na temperatura de interesse.
+def calcular_propriedades_precipitante(T, precipitante):
+    """ Calcula as propriedades do precipitante/alcano na temperatura de interesse.
     
     Inputs:
         T (float)         : temperatura (K)
-        solvente (string) : nome do solvente ("n-heptano" ou "n-pentano")  
+        solvente (string) : nome do precipitante/alcano ("n-heptano" ou "n-pentano")
     
     Outputs:
         Uma tupla contendo os seguintes elementos:
@@ -21,30 +21,30 @@ def calcular_propriedades_solvente(T, solvente):
     """    
     
     # Propriedades
-    match solvente:
+    match precipitante:
         case "n-pentano":
             MM = 72.15  # g/mol
-            rho_solvente = calcular_densidadehbt(T, MM, 469.65, 0.2522, 0.3113)  # kg/m³
+            rho = calcular_densidadehbt(T, MM, 469.65, 0.2522, 0.3113)  # kg/m³
             delta = 14.3 - 0.0232 * (T - 298.15)  # MPa**0.5
         case "n-heptano":
             MM = 100.21  # g/mol
-            rho_solvente = calcular_densidadehbt(T, MM, 540.26, 0.3507, 0.4304)  # kg/m³
+            rho = calcular_densidadehbt(T, MM, 540.26, 0.3507, 0.4304)  # kg/m³
             delta = 15.2 - 0.0232*(T - 298.15)  # MPa**0.5
-        case "n-decano":
-            MM = 142.29  # g/mol
-            # rho_solvente = calcular_densidadehbt(T, MM, ???, ???, ???)  # kg/m³
-            # delta = ??? - 0.0232*(T - 298.15)  # MPa**0.5
+        # case "n-decano":
+        #     MM = 142.29  # g/mol
+        #     rho = calcular_densidadehbt(T, MM, ???, ???, ???)  # kg/m³
+        #     delta = ??? - 0.0232*(T - 298.15)  # MPa**0.5
         case _:  # Em caso de erro, usa-se n-heptano como padrão.
             MM = 100  # g/mol
-            rho_solvente = calcular_densidadehbt(T, MM, 540.26, 0.3507, 0.4304)  # kg/m³
+            rho = calcular_densidadehbt(T, MM, 540.26, 0.3507, 0.4304)  # kg/m³
             delta = 15.2 - 0.0232 * (T - 298.15)  # MPa**0.5
 
     # Ajuste de unidades
     MM = MM*1e-3  # kg/mol
     delta = delta*1e3  # Pa**0.5
-    V_solvente = MM/rho_solvente  # m³/mol
+    V = MM/rho  # m³/mol
 
-    return MM, rho_solvente, delta, V_solvente
+    return MM, rho, delta, V
 
 
 # Função 
@@ -94,12 +94,12 @@ def calcular_densidadehbt(T, MM, Tc, wSRK, Vstar):
 if __name__ == "__main__":
 
     # Função 'calcular_densidadehbt'
-    rho = calcular_densidadehbt(310.93, 58.12, 408.14, 0.1825, 0.2568)
-    V = 58.12*1e-3/rho
+    rho_teste = calcular_densidadehbt(310.93, 58.12, 408.14, 0.1825, 0.2568)
+    V_teste = 58.12*1e-3/rho_teste
     print("\n|---------------------------------------------------------------------------------------------------------"
           "-------------------------|")
     print("| TESTE DA FUNCAO 'calcular_densidadehbt'")
-    print(f"| Volume molar calculado: {V*1e6} cm3/mol")
+    print(f"| Volume molar calculado: {V_teste*1e6} cm3/mol")
     print(f"| Volume molar gabarito: {108.9} cm3/mol")
     print("|-----------------------------------------------------------------------------------------------------------"
           "-----------------------|")

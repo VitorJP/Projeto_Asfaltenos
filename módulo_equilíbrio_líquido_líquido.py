@@ -545,7 +545,6 @@ def calcular_yield_asfaltenos(betarr, xsL, xsH, MMs):
 
     # Yield
     yield_calc = m_petróleo_H / (m_petróleo_L + m_petróleo_H)
-    print(yield_calc)
 
     return yield_calc
 

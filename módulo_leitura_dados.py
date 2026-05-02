@@ -63,7 +63,7 @@ def ler_variáveis_entrada_código(diretório):
         linhas = arquivo.readlines()
 
     # Armazenamento apenas das linhas que contém os valores das variáveis a serem lidas pelo programa principal
-    linhas_úteis = linhas[-28:-1]
+    linhas_úteis = linhas[-29:-1]
 
     # Removendo o nome da varíavel da linha
     linhas_úteis_valores = [linha.split(":", 1)[1] if ":" in linha else linha for linha in linhas_úteis]
@@ -96,9 +96,10 @@ def ler_variáveis_entrada_código(diretório):
     kw2_cinético = float(linhas_úteis_limpas[21])
     tipo_cálculo_equilíbrio = linhas_úteis_limpas[22]
     tipo_cálculo_cinética = linhas_úteis_limpas[23]
-    tipo_regressão_equilibrio = int(linhas_úteis_limpas[24])
-    algoritmo_otimização = int(linhas_úteis_limpas[25])
-    nome_planilha = linhas_úteis_limpas[26]
+    x_yield_curve = linhas_úteis_limpas[24]
+    tipo_regressão_equilibrio = int(linhas_úteis_limpas[25])
+    algoritmo_otimização = int(linhas_úteis_limpas[26])
+    nome_planilha = linhas_úteis_limpas[27]
 
     return (
         n_agregados, MWmin, MWmax, alfa, MWavg, tipo_cálculo_MM_agregados, método_integração_FDP_Gamma, 
@@ -108,8 +109,8 @@ def ler_variáveis_entrada_código(diretório):
         correlação_densidade_agregados, correlação_delta_agregados, 
         Alinha_delta_agregados, c_delta_agregados, d_delta_agregados,
         kt1_cinético, kt2_cinético, kw1_cinético, kw2_cinético,
-        tipo_cálculo_equilíbrio, tipo_cálculo_cinética, tipo_regressão_equilibrio, algoritmo_otimização,
-        nome_planilha
+        tipo_cálculo_equilíbrio, tipo_cálculo_cinética, x_yield_curve,
+        tipo_regressão_equilibrio, algoritmo_otimização, nome_planilha
         )
 
 

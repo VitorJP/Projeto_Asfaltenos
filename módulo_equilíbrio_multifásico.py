@@ -215,12 +215,12 @@ def criar_conjunto_composições_candidatas(xs_global, xs_agregados, conjunto_co
                 lista_composições.append(composição)
         return lista_composições
 
-    # conjunto_composições_candidatas.extend(caso_asfaltênico_total(xs_agregados))
+    conjunto_composições_candidatas.extend(caso_asfaltênico_total(xs_agregados))
 
     if conjunto_completo:
         conjunto_composições_candidatas.extend(vértices(n_componentes))
         conjunto_composições_candidatas.extend(pares_binários(n_componentes))
-        # conjunto_composições_candidatas.extend(pertubação_em_z(n_componentes))
+        conjunto_composições_candidatas.extend(pertubação_em_z(n_componentes))
         conjunto_composições_candidatas.extend(distribuição_dirichlet(n_componentes))
 
     return np.array(conjunto_composições_candidatas)
@@ -259,52 +259,66 @@ def identificar_fase_asfaltênica(xs_fases, index_asfaltenos=4):
     if xs_fases.shape[0] > 1:
         frações_asfaltênicas = xs_fases[:, index_asfaltenos:].sum(axis=1)
         index_fase_asfaltênica = np.argmax(frações_asfaltênicas)
-        print("\nFase asfaltênica é: ", index_fase_asfaltênica+1)
+        print(f"\nFase asfaltênica é: {index_fase_asfaltênica + 1}\n")
         return index_fase_asfaltênica
     else:
-        print("\nNão há fase asfaltênica.")
+        print("\nNão há fase asfaltênica.\n")
         return None
 
 
 # Subfunção
 def imprimir_dados_das_fases(xs_global, T, MMs, xs_fases, betas, Delta_G_mix):
     n_fases = xs_fases.shape[0]
-    xs_global_simples = normalizar_composição(simplificar_composição_SARA(xs_global))
-    massa_componentes_global = xs_global * MMs
-    massa_total = massa_componentes_global.sum()
-    massa_total_oleo = massa_componentes_global[1:].sum()
 
-    print("\n", 120*"-", "\n")
+    if np.abs(betas.sum() - 1) > 1e-6:
+        print(f"ERRO TIPO 1! Problema no particionamento das fases. Soma dos betas é {betas.sum()}")
+    for k in range(n_fases):
+        if np.abs(xs_fases[k].sum() - 1) > 1e-6:
+            print(f"ERRO TIPO 2! Problema na composição de uma fase (fase {k+1}). "
+                  f"A soma das frações molares é {xs_fases[k].sum()}")
+
+    ns_global = xs_global * 1.0  # Base de 1 mol
+    ms_global = ns_global * MMs
+    massa_total = ms_global.sum()
+    massa_total_oleo = ms_global[1:].sum()
+
+    print("\n", 120 * "-", "\n")
     print("DADOS GERAIS")
-    print("Temperatura: ", T-273.15, "°C")
-    print("Composição global: ", np.round(100*xs_global_simples, decimals=2))
+    print("Temperatura: ", T - 273.15, "°C")
+    xs_global_simples = normalizar_composição(simplificar_composição_SARA(xs_global))
+    print("Composição global: ", np.round(100 * xs_global_simples, decimals=3))
     print("Número de Fases: ", n_fases)
-    print("Soma dos Betas: ", betas.sum())
     print("Delta G de mistura: ", np.round(Delta_G_mix, decimals=6), "J/mol")
-    print("\n", 120*"-", "\n")
+    print("\n", 120 * "-", "\n")
+
+    ms_soma_fases = 0
 
     if n_fases > 1:
         for k in range(n_fases):
-            xs_fase_simples = normalizar_composição(simplificar_composição_SARA(xs_fases[k]))
             ns_fase = xs_fases[k] * betas[k]
-            massa_componentes_fase = ns_fase * MMs
-            massa_fase = massa_componentes_fase.sum()
-            massa_fase_oleo = massa_componentes_fase[1:].sum()
-            massa_fase_rel = massa_fase / massa_total
-            massa_fase_oleo_rel = massa_fase_oleo / massa_total_oleo
+            ms_fase = ns_fase * MMs
+            massa_fase_rel = ms_fase.sum() / massa_total
+            massa_fase_oleo_rel = ms_fase[1:].sum() / massa_total_oleo
 
-            print("FASE ", k+1)
+            ms_soma_fases += ms_fase
+
+            print("FASE ", k + 1)
             print("Beta: ", np.round(betas[k], decimals=8))
-            print("Composição: ", np.round(100*xs_fase_simples, decimals=2))
-            print("Massa Total: ", np.round(100*massa_fase_rel, decimals=2), "%")
-            print("Massa sem Alcano: ", np.round(100*massa_fase_oleo_rel, decimals=2), "%")
-            print("\n", 100 * "-", "\n")
+            xs_fase_simples = normalizar_composição(simplificar_composição_SARA(xs_fases[k]))
+            print("Composição: ", np.round(100 * xs_fase_simples, decimals=3))
+            print("Massa Total: ", np.round(100 * massa_fase_rel, decimals=3), "%")
+            print("Massa sem Alcano: ", np.round(100 * massa_fase_oleo_rel, decimals=3), "%")
+            print("\n", 120 * "-", "\n")
+
+        dif_ms = np.abs(ms_global - ms_soma_fases)
+        if any(dif_m > 1e-4 for dif_m in dif_ms):
+            print(f"ERRO TIPO 3! Discrepância entre o total mássico calculado pela composição global "
+                  f"e pela soma de cada fase: {np.round(dif_ms, decimals=5)}")
 
 
 # ==================================================================================================================== #
 # Função
 def calcular_flash(betas_chute, xs_chute, zs, dados_modelo_termodinâmico, tol=1e-8, it_max=50, método_Yarranton=True):
-
     betas, xs = betas_chute.copy(), xs_chute.copy()
     n_fases, n_comp = xs.shape
 
@@ -340,25 +354,24 @@ def calcular_flash(betas_chute, xs_chute, zs, dados_modelo_termodinâmico, tol=1
 
         if erro <= tol:
             break
-        if it == it_max-1:
+        if it == it_max - 1:
             # print(f"O método de Rachford-Rice não convergiu em {it+1} iterações. O erro final foi {erro}.")
             pass
 
     if all(tol < beta < 1.0 - tol for beta in betas):
-        return True, xs, betas
+        return True, xs, normalizar_composição(betas)
     else:
         betas = normalizar_composição(np.clip(betas[1:], 0.0, 1.0))
-        return False, xs[1:], betas
+        return False, xs[1:], normalizar_composição(betas)
 
 
 # Função
-def calcular_equilíbrio_multifásico(T, zs, deltas, Vs, MMs, xsagregados, max_fases=20):
-
+def calcular_equilíbrio_multifásico(T, zs, deltas, Vs, MMs, xs_agregados, max_fases=20):
     # Leitura e normalização das composições
     zs = normalizar_composição(np.where(zs < 1e-8, 0, zs))
-    xsagregados = normalizar_composição(np.where(xsagregados < 1e-8, 0, xsagregados))
+    xs_agregados = normalizar_composição(np.where(xs_agregados < 1e-8, 0, xs_agregados))
     xs_total_asfaltenos = np.zeros_like(zs)
-    xs_total_asfaltenos[4:] = xsagregados
+    xs_total_asfaltenos[4:] = xs_agregados
 
     # Declaração do Dicionário do Modelo Termodinâmico
     dados_modelo_termodinâmico = {
@@ -368,17 +381,17 @@ def calcular_equilíbrio_multifásico(T, zs, deltas, Vs, MMs, xsagregados, max_f
 
     xs_fases, betas, Delta_G_mix = np.array([zs.copy()]), np.array([1.0]), 0.0
 
-    # for f in range(len(xs_fases)):
-    #     xs_chute_asfaltênico, betas = preparar_chute_para_flash(f, xs_total_asfaltenos, xs_fases, betas)
-    #     s, xs_fases, betas = calcular_flash(
-    #         betas, xs_chute_asfaltênico, zs, dados_modelo_termodinâmico, método_Yarranton=False
-    #     )
-    #     if s:
-    #         print("Chute asfaltênico particiona.")
-    #     Delta_G_mix = calcular_Delta_G_mistura(betas, xs_fases, zs, dados_modelo_termodinâmico)
+    for f in range(len(xs_fases)):
+        xs_chute_asfaltênico, betas = preparar_chute_para_flash(f, xs_total_asfaltenos, xs_fases, betas)
+        s, xs_fases, betas = calcular_flash(
+            betas, xs_chute_asfaltênico, zs, dados_modelo_termodinâmico, método_Yarranton=False
+        )
+        if s:
+            print("Chute asfaltênico particiona.")
+        Delta_G_mix = calcular_Delta_G_mistura(betas, xs_fases, zs, dados_modelo_termodinâmico)
 
     particionou = True
-    conj_candidatos = criar_conjunto_composições_candidatas(zs, xsagregados, conjunto_completo=True)
+    conj_candidatos = criar_conjunto_composições_candidatas(zs, xsagregados)
     print("Número de composições candidatas totais: ", len(conj_candidatos))
 
     while particionou:
@@ -390,7 +403,7 @@ def calcular_equilíbrio_multifásico(T, zs, deltas, Vs, MMs, xsagregados, max_f
                 particionou = False
                 break
             conj_instáveis = selecionar_composições_instáveis(conj_candidatos, xs_fases[f], dados_modelo_termodinâmico)
-            print("Número de composições candidatas instáveis: ", len(conj_instáveis))
+            print("Número de composições candidatas instáveis (tpd): ", len(conj_instáveis))
 
             if len(conj_instáveis) == 0:
                 particionou = False
@@ -405,9 +418,9 @@ def calcular_equilíbrio_multifásico(T, zs, deltas, Vs, MMs, xsagregados, max_f
                     if not flash_separa:
                         continue
 
-                    Delta_G_mix = calcular_Delta_G_mistura(betas_flash, xs_flash, zs, dados_modelo_termodinâmico)
-                    if Delta_G_mix < 0.0:
-                        resultados_flash.append((Delta_G_mix, xs_flash, betas_flash))
+                    novo_Delta_G_mix = calcular_Delta_G_mistura(betas_flash, xs_flash, zs, dados_modelo_termodinâmico)
+                    if novo_Delta_G_mix < Delta_G_mix:
+                        resultados_flash.append((novo_Delta_G_mix, xs_flash, betas_flash))
 
                 print("Número de composições candidatas pós-flash: ", len(resultados_flash))
                 if not resultados_flash:
@@ -422,3 +435,108 @@ def calcular_equilíbrio_multifásico(T, zs, deltas, Vs, MMs, xsagregados, max_f
     imprimir_dados_das_fases(zs, T, MMs, xs_fases, betas, Delta_G_mix)
 
     return betas, xs_fases, i_fase_asfaltênica
+
+
+# ******************************************************************************************************************** #
+#  ATENÇÃO: O CÓDIGO A SEGUIR SERÁ EXECUTADO APENAS QUANDO ESTE MÓDULO FOR RODADO COMO SCRIPT PRINCIPAL.               #
+#           O CÓDIGO A SEGUIR SERVE PARA CONFERIR SE AS FUNÇÕES DESTE MÓDULO FUNCIONAM CORRETAMENTE.                   #
+# ******************************************************************************************************************** #
+# INÍCIO DO TESTE
+if __name__ == "__main__":
+
+    # 0.1 - Bibliotecas
+    import os
+    import numpy as np
+    import pandas as pd
+    import scipy as scp
+    from tabulate import tabulate
+
+    # 0.2 - Módulos
+    from módulo_leitura_dados import ler_variáveis_entrada_código, ler_dados_experimentais
+    from módulo_composições import normalizar_composição, fracionar_composição_SARA
+    from módulo_propriedades_precipitante import calcular_propriedades_solvente
+    from módulo_propriedades_frações_SAR import calcular_propriedades_saturados, calcular_propriedades_aromáticos, \
+        calcular_propriedades_resinas
+    from módulo_distribuição_massa_molar import gerar_distribuição_massa_molar
+    from módulo_propriedades_agregados import calcular_propriedades_agregados
+
+    # PARTE 1 - LEITURA DE INFORMAÇÕES BÁSICAS
+
+    # 1.1 - Dados de entrada do código
+    diretório_deste_módulo = os.path.dirname(__file__)
+    diretório_do_txt = os.path.join(diretório_deste_módulo, 'Dados de Entrada', 'variáveis_entrada_código.txt')
+    (n_agregados, MWmin, MWmax, alfa, MWavg, tipo_cálculo_MM_agregados, método_integração_FDP_Gamma,
+     correlação_densidade_saturados, correlação_delta_saturados,
+     correlação_densidade_aromáticos, correlação_delta_aromáticos,
+     correlação_densidade_resinas, correlação_delta_resinas,
+     correlação_densidade_agregados, correlação_delta_agregados,
+     Alinha_delta_agregados, c_delta_agregados, d_delta_agregados,
+     kt1_cinético, kt2_cinético, kw1_cinético, kw2_cinético,
+     tipo_cálculo_equilíbrio, tipo_cálculo_cinética, tipo_regressão_equilíbrio, algoritmo_otimização,
+     nome_planilha) = ler_variáveis_entrada_código(diretório_do_txt)
+
+    # 1.2 - Validação dos valores das variáveis 'correlação_delta_agregados' e 'tipo_regressão'
+    # Obs: só faz sentido que 'tipo_regressão' seja >=3 e <=5 se correlação_delta_agregados = 'Barrera'
+    if 3 <= tipo_regressão_equilíbrio <= 5 and correlação_delta_agregados != 'Barrera':
+        mensagem = "\nATENCAO: Corrija o arquivo 'variaveis_entrada_codigo.txt'"
+        mensagem += f"\nPONTO A CORRIGIR: a variavel 'tipo_regressao' = {tipo_regressão_equilíbrio} " \
+                    f"exige que 'correlacao_delta_agregados == 'Barrera'."
+        raise ValueError(mensagem)
+
+    # 1.3 - Informações experimentais do sistema
+    diretório_do_xlsx = os.path.join(diretório_deste_módulo, 'Dados de Entrada', 'dados_experimentais_codigo.xlsx')
+    SARA, T, solvente, ws_simplificados, yields_exp = ler_dados_experimentais(diretório_do_xlsx, nome_planilha)
+    SARA = normalizar_composição(SARA)  # normalização da composição SARA
+
+    # PARTE 2 - PROPRIEDADES DO SOLVENTE, SATURADOS, AROMÁTICOS E RESINAS
+
+    # 2.1 - Inicialização dos arrays de massas molares, densidades, parâmetros de solubilidade e volumes molares
+    # de todos os componentes do sistema
+    # Obs: Estrutura do array: [Solvente, S, A, R, Asf0, Asf1, ...]
+    MMs, rhos, deltas, Vs = [np.zeros(4 + n_agregados) for _ in range(4)]
+
+    # 2.2 - Propriedades do solvente
+    MMs[0], rhos[0], deltas[0], Vs[0] = calcular_propriedades_solvente(T, solvente)
+
+    # 2.3 - Propriedades dos saturados, aromáticos e resinas
+    MMs[1], rhos[1], deltas[1], Vs[1] = calcular_propriedades_saturados(
+        T, correlação_densidade_saturados, correlação_delta_saturados)
+    MMs[2], rhos[2], deltas[2], Vs[2] = calcular_propriedades_aromáticos(
+        T, correlação_densidade_aromáticos, correlação_delta_aromáticos)
+    MMs[3], rhos[3], deltas[3], Vs[3] = calcular_propriedades_resinas(
+        T, correlação_densidade_resinas, correlação_delta_resinas)
+
+    # PARTE 3 - PREDIÇÃO DA ANÁLISE DE FASES
+
+    # 3.1 - Propriedades dos agregados de asfaltenos
+    # 3.1.1 - Massas molares, frações mássicas e frações molares
+    MMsagregados, wsagregados, xsagregados = gerar_distribuição_massa_molar(
+        alfa, MWavg, n_agregados, MWmin, MWmax, tipo_cálculo_MM_agregados, método_integração_FDP_Gamma)
+    wsagregados = normalizar_composição(wsagregados)  # normalização das frações mássicas
+    xsagregados = normalizar_composição(xsagregados)  # normalização das frações molares
+
+    # 3.1.2 - Densidades, parâmetros de solubilidades e volumes molares
+    rhosagregados, deltasagregados, Vsagregados = calcular_propriedades_agregados(
+        T, MMsagregados, correlação_densidade_agregados, correlação_delta_agregados,
+        Alinha_delta_agregados, c_delta_agregados, d_delta_agregados)
+
+    # 3.1.3 - Alocação das propriedades dos agregados de asfaltenos nos arrays das propriedades dos componentes
+    MMs[4:4 + n_agregados] = MMsagregados[0:n_agregados] * 1e-3  # kg/mol
+    rhos[4:4 + n_agregados] = rhosagregados[0:n_agregados]
+    deltas[4:4 + n_agregados] = deltasagregados[0:n_agregados]
+    Vs[4:4 + n_agregados] = Vsagregados[0:n_agregados]
+
+    # 3.2 - COMPOSIÇÃO GLOBAL DO SISTEMA EM TERMOS DE [Solvente, S, A, R, Asf0, Asf1, ...] (base mássica e base molar)
+    ws_completo, xs_completo = fracionar_composição_SARA(ws_simplificados, SARA, wsagregados, MMs)
+    ws_completo = np.apply_along_axis(func1d=normalizar_composição, axis=1, arr=ws_completo)
+    # normalização das frações mássicas de cada linha
+    xs_completo = np.apply_along_axis(func1d=normalizar_composição, axis=1, arr=xs_completo)
+    # normalização das frações molares de cada linha
+
+    # 3.3 - CÁLCULO DE EQUILÍBRIO MULTIFÁSICO
+    # 3.3.1 - Teste de Recursividade
+    beta_test, xs_fases_test, i_asf_test = calcular_equilíbrio_multifásico(T, xs_completo[-1], deltas, Vs, MMs,
+                                                                           xsagregados)
+
+# FIM DO TESTE
+# ******************************************************************************************************************** #
