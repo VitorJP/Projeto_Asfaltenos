@@ -4,8 +4,18 @@ import scipy as scp
 from scipy.constants import R  # m3*Pa/mol*K
 
 
-def calcular_yield_tempo_infinito(x_solv, x_onset, yield_max, ks_x):
-    return yield_max / (1 + ks_x[0] * np.exp(-(x_solv - x_onset)/ks_x[1]))
+def obter_parâmetros_de_forma_da_curva_de_precipitação(xs_prec, yield_curve):
+    yield_max = yield_curve[-1]
+    x_onset = 0
+    for i_onset in range(len(yield_curve)):
+        if yield_curve[i_onset] > 0.005:
+            x_onset = xs_prec[i_onset] if i_onset == 0 else xs_prec[i_onset - 1]
+            break
+    return x_onset, yield_max
+
+
+def calcular_yield_tempo_infinito(x_prec, x_onset, yield_max, ks_x):
+    return yield_max / (1 + ks_x[0] * np.exp(-(x_prec - x_onset)/ks_x[1]))
 
 
 def calcular_yields_temporais(tempos, x_solv, x_onset, yield_max, ks_x, ks_t):
@@ -13,6 +23,14 @@ def calcular_yields_temporais(tempos, x_solv, x_onset, yield_max, ks_x, ks_t):
     tau = ks_t[0] * (x_solv ** ks_t[1])
     yields_t_inf = calcular_yield_tempo_infinito(x_solv, x_onset, yield_max, ks_x)
     return yields_t_inf * (1 - np.exp(- tempos / tau))
+
+
+def criar_curva_de_equilíbrio(xs_prec_exp, x_prec_onset, yield_max, ks_x, x_max=95):
+    xs_prec_eq = np.linspace(0, x_max/100, x_max+1)
+    xs_prec_eq = np.unique(np.sort(np.concatenate[xs_prec_eq, xs_prec_exp]))
+    yields_eq = calcular_yield_tempo_infinito(xs_prec_eq, x_prec_onset, yield_max, ks_x)
+
+    return xs_prec_eq, yields_eq
 
 
 def fator_de_correção_de_Saidoun(rho_liq, rho_asf, Ra=9.5, Rp=1.3, Df=2.45):

@@ -156,7 +156,7 @@ def plotar_distribuição_massa_molar(MMsagregados, xsagregados, alfa, MWavg, in
     pass
 
 
-def plotar_yield_curves_cinéticas(ws_solvente, tempos, yields_exp, yields_cinéticas_exp, yields_cinéticas_calc,
+def plotar_yield_curves_cinéticas(ws_solvente, tempos, yields_eq, yields_cinéticas_exp, yields_cinéticas_calc,
                                   informações_auxiliares):
     """ Cria um gráfico contendo as curvas de solubilidade calculadas em diferentes tempos,
         a curva de equilíbrio (modelo) e a experimental.
@@ -196,7 +196,7 @@ def plotar_yield_curves_cinéticas(ws_solvente, tempos, yields_exp, yields_ciné
                  c=color, label=f"{tempos[t]}h (calc)", ls='-', lw='2')
 
     # Série de dados de equilíbrio
-    plt.plot(100 * ws_solvente, 100 * yields_cinéticas_calc[-1, :], c="red", ls='--', lw='2', label="equilíbrio")
+    plt.plot(100 * ws_solvente, 100 * yields_cinéticas_calc[0, :], c="red", ls='--', lw='2', label="equilíbrio")
 
     # Títulos dos eixos, valores min e max de cada eixo, fontes das marcas de escala, marcas de escala secundárias
     plt.xlabel("fração de solvente, wt%", fontsize=14)

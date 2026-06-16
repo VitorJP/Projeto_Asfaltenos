@@ -292,5 +292,5 @@ tipo_cálculo_cinética:nao
 x_da_yield_curve:solubility
 tipo_regressão_equilibrio:2
 algoritmo_otimização:1
-nome_planilha:Tharanivasan_L_pent
+nome_planilha:Tharanivasan_L_hept
 +------------------------------+---------------------------------+-----------------------------------------------------+

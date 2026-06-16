@@ -115,7 +115,7 @@ def ler_variáveis_entrada_código(diretório):
 
 
 # Função
-def ler_dados_experimentais(diretório, nome_planilha):
+def ler_dados_experimentais(diretório, planilha):
     """ Lê o arquivo 'dados_experimentais.xlsx'.
     
     Inputs:
@@ -132,7 +132,7 @@ def ler_dados_experimentais(diretório, nome_planilha):
     """
 
     # Leitura do DataFrame
-    df = pd.read_excel(diretório, nome_planilha)
+    df = pd.read_excel(diretório, planilha)
 
     # Composição SARA
     SARA = df.iloc[3:7, 1].to_numpy()
@@ -144,19 +144,56 @@ def ler_dados_experimentais(diretório, nome_planilha):
     # Solvente
     solvente = df.iloc[8, 1]
 
-    # Composição do sistema
-    frações_solvente = pd.to_numeric(df.iloc[2:100, 3], errors='coerce').to_numpy()
-    frações_solvente = frações_solvente[~np.isnan(frações_solvente)]
-    frações_solvente = frações_solvente[(frações_solvente >= 0) & (frações_solvente <= 1)]
+    # Dados do sistema
+    dados_exp = pd.DataFrame({
+        'w_solvente': pd.to_numeric(df.iloc[2:, 3], errors='coerce'),
+        'yield': pd.to_numeric(df.iloc[2:, 4], errors='coerce')
+    })
+
+    # Encontrar a última linha que possui algum dado
+    mascara = dados_exp.notna().any(axis=1)
+    ultima_linha = mascara[mascara].index[-1]
+
+    # Cortar apenas o final vazio
+    dados_exp = dados_exp.loc[:ultima_linha]
+
+    frações_solvente = dados_exp['w_solvente'].to_numpy()
+    yields_exp = dados_exp['yield'].to_numpy()
+
     frações_petróleo = 1 - frações_solvente
     ws_simplificados = np.column_stack((frações_solvente, frações_petróleo))
-
-    # Yields
-    yields_exp = pd.to_numeric(df.iloc[2:100, 4], errors='coerce').to_numpy()
-    yields_exp = yields_exp[~np.isnan(yields_exp)]
-    yields_exp = yields_exp[(yields_exp >= 0) & (yields_exp <= 1)]
     
     return SARA, T, solvente, ws_simplificados, yields_exp
+
+
+def ler_dados_cinéticos(diretório, planilha):
+
+    # Leitura do DataFrame
+    df = pd.read_excel(diretório, planilha, header=None)
+
+    tempos = []
+    loc_t = 4  # Primeira coluna com dados de yield
+
+    # Preencher o vetor de tempos até encontrar uma célula vazia no excel dos dados
+    while True:
+        t = df.iloc[1, loc_t]
+
+        if pd.isna(t):
+            break
+
+        tempos.append(t)
+        loc_t += 1
+
+    tempos = np.array(tempos)
+
+    # Dados de yield curves em múltiplos tempos
+    dados = (df.iloc[3:, 4:loc_t].apply(pd.to_numeric, errors='coerce'))
+
+    ultima_linha = dados.notna().any(axis=1)
+    dados = dados.loc[:ultima_linha[ultima_linha].index[-1]]
+    yields_temporais = dados.to_numpy().T
+
+    return tempos, yields_temporais
 
 
 # ******************************************************************************************************************** #

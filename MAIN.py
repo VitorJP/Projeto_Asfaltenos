@@ -9,17 +9,18 @@ import scipy as scp
 from tabulate import tabulate
 
 # 0.2 - Módulos 
-from módulo_leitura_dados import ler_variáveis_entrada_código, ler_dados_experimentais
+from módulo_leitura_dados import ler_variáveis_entrada_código, ler_dados_experimentais, ler_dados_cinéticos
 from módulo_composições import normalizar_composição, fracionar_composição_SARA, \
     converter_fração_molar_para_fração_volumétrica
-from módulo_propriedades_precipitante import calcular_propriedades_solvente
+from módulo_propriedades_precipitante import calcular_propriedades_precipitante
 from módulo_propriedades_frações_SAR import calcular_propriedades_saturados, calcular_propriedades_aromáticos, \
     calcular_propriedades_resinas
 from módulo_distribuição_massa_molar import gerar_distribuição_massa_molar
 from módulo_propriedades_agregados import calcular_propriedades_agregados
 from módulo_equilíbrio_líquido_líquido import calcular_ELL, calcular_yield_asfaltenos
 from módulo_equilíbrio_multifásico import calcular_equilíbrio_multifásico
-from módulo_análise_cinética import calcular_yield_tempo_infinito, calcular_yields_temporais
+from módulo_análise_cinética import calcular_yield_tempo_infinito, calcular_yields_temporais, \
+    obter_parâmetros_de_forma_da_curva_de_precipitação, criar_curva_de_equilíbrio
 from módulo_gráficos import plotar_yield_curves, plotar_distribuição_massa_molar, plotar_yield_curves_cinéticas
 
 
@@ -62,7 +63,7 @@ SARA = normalizar_composição(SARA)  # normalização da composição SARA
 MMs, rhos, deltas, Vs = [np.zeros(4 + n_agregados) for _ in range(4)]
 
 # 2.2 - Propriedades do precipitante/alcano
-MMs[0], rhos[0], deltas[0], Vs[0] = calcular_propriedades_solvente(T, precipitante)
+MMs[0], rhos[0], deltas[0], Vs[0] = calcular_propriedades_precipitante(T, precipitante)
 
 # 2.3 - Propriedades dos saturados, aromáticos e resinas
 MMs[1], rhos[1], deltas[1], Vs[1] = calcular_propriedades_saturados(
@@ -122,8 +123,7 @@ if tipo_cálculo_equilíbrio == 'regressao':
         Vs[4:4 + n_agregados] = Vsagregados[0:n_agregados] 
         
         # 3.1.5 - Composição global do sistema em termos de [Solvente, S, A, R, Asf0, Asf1, ...] (base mássica e molar)
-        ws_completo, xs_completo = fracionar_composição_SARA(ws_simplificados, SARA, wsagregados, MMs)
-        ws_completo = np.apply_along_axis(func1d=normalizar_composição, axis=1, arr=ws_completo)
+        _, xs_completo = fracionar_composição_SARA(ws_simplificados, SARA, wsagregados, MMs)
         xs_completo = np.apply_along_axis(func1d=normalizar_composição, axis=1, arr=xs_completo)
 
         # 3.1.6 - Cálculo de equilíbrio líquido-líquido
@@ -136,7 +136,7 @@ if tipo_cálculo_equilíbrio == 'regressao':
         # 3.1.7 - Expressão matemática a ser minimizada
         yields_diferenças = np.abs(yields_calc - yields_exp)  # diferenças entre os yields calculados e experimentais
 
-        return (1/n_dados_exp)*yields_diferenças.sum()
+        return np.nanmean(yields_diferenças)
 
     # 3.2 - Minimização da Função Objetivo para Regressão dos Parâmetros
     # 3.2.1 - Chutes iniciais dos parâmetros a serem estimados
@@ -274,37 +274,27 @@ for i in range(n_dados_exp):
 if tipo_cálculo_cinética != "nao":
 
     # 6.1 - Parâmetros do Modelo Cinético
-    # 6.1.1 - Relacionados ao Equilíbrio de Fases
-    w_solv = np.asarray(ws_simplificados[:, 0], dtype=float)
-    yields_eq = (yields_exp if np.any(yields_exp != 0) else yields_calc)
-    yield_max = yields_eq[-1]
-    w_onset = 0
-    for i_onset in range(len(yields_eq)):
-        if yields_eq[i_onset] > 0.005:
-            w_onset = w_solv[i_onset] if i_onset == 0 else w_solv[i_onset - 1]
-            break
+    # 6.1.1 - Parâmetros de forma da yield curve
+    w_alk = ws_completo[:, 0]
+    yields_eq = yields_calc
+    w_onset, yield_max = obter_parâmetros_de_forma_da_curva_de_precipitação(w_alk, yields_eq)
 
     # 6.1.2 - Parâmetros para Otimização
-    tempos = [2, 24]
     parâmetros_cinéticos_w = np.array([kw1_cinético, kw2_cinético])  # Relacionados ao Equilíbrio de Fases
-    parâmetros_cinéticos_t = np.array([kt1_cinético, kt2_cinético])  # Relacionados ao Tempo
+    parâmetros_cinéticos_t = np.array([kt1_cinético, kt2_cinético])  # Relacionados à Cinética
 
-    # 6.1.3 - Dados Experimentais Temporais (MATRIZ ZERO PARA TESTES)
-    # yields_temp_exp = np.zeros((len(tempos), len(yields_eq)))
-    yields_temp_exp = np.array([[0, 0, 0, 0, 0, 0.003441427, 0.013719834, 0.016089932, 0.020332666, 0.031975851,
-                                 0.042157725],
-                                [0.007297283, 0.000000000, 0.003398556, 0.004161426, 0.015312316, 0.027977816,
-                                 0.015297170, 0.044440245, 0.046076683, 0.056668389, 0.064541309]])
+    # 6.1.3 - Dados Experimentais Temporais
+    tempos, yields_temp_exp = ler_dados_cinéticos(diretório_do_xlsx, nome_planilha)
 
     # 6.3 - Otimização dos Parâmetros Cinéticos de Tempo Infinito
     if tipo_cálculo_cinética in ("regressao1", "regressao2"):
         # 6.3.1 - Função Objetivo
-        def F_obj_w(params_opt, yields_eq, w_solv, w_onset, yield_max):
-            yields_t_inf = calcular_yield_tempo_infinito(w_solv, w_onset, yield_max, params_opt)
-            return np.mean(np.abs(yields_t_inf - yields_eq))
+        def F_obj_w(params_opt, yields_eq, w_alk, w_onset, yield_max):
+            yields_t_inf = calcular_yield_tempo_infinito(w_alk, w_onset, yield_max, params_opt)
+            return np.nanmean(np.abs(yields_t_inf - yields_eq))
 
         # 6.3.2 - Otimização dos Parâmetros
-        argumentos_F_obj_w = (yields_eq, w_solv, w_onset, yield_max)
+        argumentos_F_obj_w = (yields_eq, w_alk, w_onset, yield_max)
         sol_w = scp.optimize.minimize(F_obj_w, parâmetros_cinéticos_w, method="Nelder-Mead", args=argumentos_F_obj_w)
         parâmetros_cinéticos_w = sol_w.x
 
@@ -313,23 +303,26 @@ if tipo_cálculo_cinética != "nao":
         # 6.4.1 - Função Objetivo
         def F_obj_t(params_opt, ts, yields_temp_exp, yield_max, params_t_inf, w_solv, w_onset):
             yields_ts = calcular_yields_temporais(ts, w_solv, w_onset, yield_max, params_t_inf, params_opt)
-            return np.mean(np.abs(yields_ts - yields_temp_exp))
+            return np.nanmean(np.abs(yields_ts - yields_temp_exp))
 
         # 6.4.2 - Otimização dos Parâmetros
-        argumentos_F_obj_t = (tempos, yields_temp_exp, yield_max, parâmetros_cinéticos_w, w_solv, w_onset)
+        argumentos_F_obj_t = (tempos, yields_temp_exp, yield_max, parâmetros_cinéticos_w, w_alk, w_onset)
         sol_t = scp.optimize.minimize(F_obj_t, parâmetros_cinéticos_t, method='Nelder-Mead', args=argumentos_F_obj_t)
         parâmetros_cinéticos_t = sol_t.x
 
     # 6.5 - Predição do Modelo Cinético
     yields_temp_calc = calcular_yields_temporais(
-        tempos, w_solv, w_onset, yield_max, parâmetros_cinéticos_w, parâmetros_cinéticos_t
+        tempos, w_alk, w_onset, yield_max, parâmetros_cinéticos_w, parâmetros_cinéticos_t
     )
 
-    print(parâmetros_cinéticos_t)
+    print("w_onset: ", w_onset)
+    print("yield_max: ", yield_max)
+    print("parâmetros cinéticos de equilíbrio: ", parâmetros_cinéticos_w)
+    print("parâmetros cinéticos temporais: ", parâmetros_cinéticos_t)
 
     # 6.6 - Criação do Gráfico de Curvas Cinéticas em diferentes tempos
     informações_auxiliares = [tipo_cálculo_cinética, nome_planilha]
-    plotar_yield_curves_cinéticas(w_solv, tempos, yields_exp, yields_temp_exp, yields_temp_calc, informações_auxiliares)
+    plotar_yield_curves_cinéticas(w_alk, tempos, yields_eq, yields_temp_exp, yields_temp_calc, informações_auxiliares)
 
 # ==================================================================================================================== #
 # PARTE 7 - MUDANÇA DE REFERENCIAL DAS YIELD CURVES
@@ -358,7 +351,7 @@ no_experimental_data = True if all(yield_exp == 0 for yield_exp in yields_exp) e
 
 # 8.1.2 - Criação de listas com os resultados formatados
 DAs = None if no_experimental_data else np.abs(yields_exp - yields_calc)  # desvios absolutos fracionais
-DMA = None if no_experimental_data else np.mean(DAs)  # média dos desvios absolutos fracionais
+DMA = None if no_experimental_data else np.nanmean(DAs)  # média dos desvios absolutos fracionais
 
 DAs_formatado = ["nao disponivel" for yield_calc in yields_calc] if no_experimental_data \
     else [f"{100*DA:.2f}%" for DA in DAs]
