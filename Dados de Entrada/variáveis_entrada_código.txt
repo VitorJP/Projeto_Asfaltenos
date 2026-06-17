@@ -266,7 +266,7 @@ Valores:
 --------
 
 n_agregados:30
-MWmin:1800
+MWmin:750
 MWmax:30000
 alfa:3.5
 MWavg:3620
@@ -289,8 +289,8 @@ kw1_cinético:683.75
 kw2_cinético:0.030
 tipo_cálculo_equilíbrio:regressao
 tipo_cálculo_cinética:nao
-x_da_yield_curve:solubility
+x_da_yield_curve:mass
 tipo_regressão_equilibrio:2
 algoritmo_otimização:1
-nome_planilha:Tharanivasan_L_hept
+nome_planilha:Powers_VB-B2
 +------------------------------+---------------------------------+-----------------------------------------------------+

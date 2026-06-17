@@ -116,7 +116,7 @@ def ler_variáveis_entrada_código(diretório):
 
 # Função
 def ler_dados_experimentais(diretório, planilha):
-    """ Lê o arquivo 'dados_experimentais.xlsx'.
+    """ Lê o arquivo 'dados_experimentais_codigo_completo.xlsx'.
     
     Inputs:
         diretório (string)     : diretório do arquivo
@@ -227,7 +227,8 @@ if __name__ == "__main__":
           "-------------------------------------------------|")
 
     # Função 'ler_dados_experimentais'
-    diretório_do_xlsx = os.path.join(diretório_deste_módulo, 'Dados de Entrada', 'dados_experimentais_codigo.xlsx')
+    diretório_do_xlsx = os.path.join(diretório_deste_módulo, 'Dados de Entrada',
+                                     'dados_experimentais_codigo_completo.xlsx')
     nome_planilha = 'Yanes_P1'
     saída_da_função = ler_dados_experimentais(diretório_do_xlsx, nome_planilha)
     print("TESTE DA FUNCAO 'ler_dados_experimentais'")

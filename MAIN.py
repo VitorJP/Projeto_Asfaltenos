@@ -49,7 +49,7 @@ if 3 <= tipo_regressão_equilíbrio <= 5 and correlação_delta_agregados != 'Ba
     raise ValueError(mensagem)
 
 # 1.3 - Informações experimentais do sistema
-diretório_do_xlsx = os.path.join(diretório_deste_módulo, 'Dados de Entrada', 'dados_experimentais_codigo.xlsx')
+diretório_do_xlsx = os.path.join(diretório_deste_módulo, 'Dados de Entrada', 'dados_experimentais_codigo_completo.xlsx')
 SARA, T, precipitante, ws_simplificados, yields_exp = ler_dados_experimentais(diretório_do_xlsx, nome_planilha)
 SARA = normalizar_composição(SARA)  # normalização da composição SARA
 
@@ -330,17 +330,22 @@ if tipo_cálculo_cinética != "nao":
 match x_yield_curve:
     case "molar":
         eixo_x = xs_completo[:, 0]
+        x_label = "Fração Molar precipitante"
     case "mass":
         eixo_x = ws_completo[:, 0]
+        x_label = "Fração Mássica precipitante"
     case "volume":
         phis_completo = converter_fração_molar_para_fração_volumétrica(xs_completo, Vs)
         eixo_x = phis_completo[:, 0]
+        x_label = "Fração Volumétrica precipitante"
     case "solubility":
         phis_L = converter_fração_molar_para_fração_volumétrica(xsL, Vs)
         deltas_L = (phis_L * deltas[None, :]).sum(axis=1)  # Pa**0.5
         eixo_x = deltas_L * 1e-3  # MPa**0.5
-    case _:
-        eixo_x = ws_completo[:, 0]  # Em caso de erro, utilizar fração mássica como padrão.
+        x_label = "Parâmetro de Solubilidade"
+    case _:  # Em caso de erro, utilizar fração mássica como padrão.
+        eixo_x = ws_completo[:, 0]
+        x_label = "Fração Mássica precipitante"
 
 # ==================================================================================================================== #
 # PARTE 8 - EXIBIÇÃO DOS RESULTADOS
@@ -357,6 +362,8 @@ DAs_formatado = ["nao disponivel" for yield_calc in yields_calc] if no_experimen
     else [f"{100*DA:.2f}%" for DA in DAs]
 DMA_formatado = "nao disponivel" if no_experimental_data else f"{100*DMA:.4f}%"
 
+eixo_x_formatado = [f"{100*valor_x:.2f}%" for valor_x in eixo_x] if x_yield_curve != 'solubility' else \
+    [f"{valor_x:.2f} MPa^0.5" for valor_x in eixo_x]
 yields_exp_formatado = ["nao disponivel" for yield_calc in yields_calc] if no_experimental_data \
     else [f"{100*yield_exp:.2f}%" for yield_exp in yields_exp]
 yields_calc_formatado = [f"{100*yield_calc:.2f}%" for yield_calc in yields_calc]
@@ -364,9 +371,9 @@ betas_formatado = [f"{beta:.4e}" for beta in betas]
 
 # 8.2 - Criação e impressão de Dataframe com os resultados
 df_resultados = pd.DataFrame(
-    {"  Fracao Solvente  ": np.round(eixo_x, decimals=4),
-     "  yield (exp.)  ": yields_exp_formatado,
-     "  yield (calc.)  ": yields_calc_formatado,
+    {f"  {x_label}  ": eixo_x_formatado,
+     "  Yield (exp.)  ": yields_exp_formatado,
+     "  Yield (calc.)  ": yields_calc_formatado,
      "  DA (%)  ": DAs_formatado,
      "  Beta  ": betas_formatado,
      "  somaxsL  ": somaxsL,
