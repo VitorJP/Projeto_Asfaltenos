@@ -4,7 +4,7 @@ import scipy as scp
 from scipy.constants import R  # m3*Pa/mol*K
 
 
-def obter_parâmetros_de_forma_da_curva_de_precipitação(xs_prec, yield_curve):
+def obter_parâmetros_experimentais_da_yield_curve(xs_prec, yield_curve):
     yield_max = yield_curve[-1]
     x_onset = 0
     for i_onset in range(len(yield_curve)):
@@ -14,15 +14,15 @@ def obter_parâmetros_de_forma_da_curva_de_precipitação(xs_prec, yield_curve):
     return x_onset, yield_max
 
 
-def calcular_yield_tempo_infinito(x_prec, x_onset, yield_max, ks_x):
-    return yield_max / (1 + ks_x[0] * np.exp(-(x_prec - x_onset)/ks_x[1]))
+def calcular_yields_tempo_infinito(x_prec, x_onset, yield_max, k1, k2):
+    return yield_max / (1 + k1 * np.exp(-(x_prec - x_onset)/k2))
 
 
-def calcular_yields_temporais(tempos, x_solv, x_onset, yield_max, ks_x, ks_t):
+def calcular_yields_temporais(tempos, x_solv, x_onset, yield_max, kxs_1, kxs_2, kts_1, kts_2):
     tempos = np.asarray(tempos)[:, None]
-    tau = ks_t[0] * (x_solv ** ks_t[1])
-    yields_t_inf = calcular_yield_tempo_infinito(x_solv, x_onset, yield_max, ks_x)
-    return yields_t_inf * (1 - np.exp(- tempos / tau))
+    taus = kts_1 * (x_solv ** kts_2)
+    yields_t_inf = calcular_yields_tempo_infinito(x_solv, x_onset, yield_max, kxs_1, kxs_2)
+    return yields_t_inf * (1 - np.exp(- tempos / taus)), taus
 
 
 def criar_curva_de_equilíbrio(xs_prec_exp, x_prec_onset, yield_max, ks_x, x_max=95):
@@ -54,15 +54,14 @@ def deposição_cumulativa_asfaltenos():
 if __name__ == "__main__":
     from módulo_gráficos import plotar_yield_curves_cinéticas
 
-    par_cin_t_inf = [683.75, 0.030]
-    par_cin_t = [0.2801, -8.132]
+    par_cin = [683.75, 0.030, 0.2801, -8.132]
     lista_t = [2, 4, 6, 8, 16, 24]
     max_yield_eq, onset_x_value = 0.063419, 0.50
     lista_x_solv = np.linspace(0.05, 0.95)
 
     yields_t_infinito = calcular_yield_tempo_infinito(lista_x_solv, onset_x_value, max_yield_eq, par_cin_t_inf)
     yields_t_calc = calcular_yields_temporais(lista_t, lista_x_solv, onset_x_value, yields_t_infinito,
-                                              par_cin_t_inf, par_cin_t)
+                                              par_cin[0], par_cin[1], par_cin[2], par_cin[3])
 
     yields_experimentais = np.zeros(len(lista_x_solv))
     yields_t_exp = np.zeros((len(lista_t), len(lista_x_solv)))

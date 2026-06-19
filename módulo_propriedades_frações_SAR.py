@@ -20,7 +20,7 @@ def calcular_propriedades_saturados(T, correlação_densidade_saturados, correla
 
     # Densidade (kg/m³)
     match correlação_densidade_saturados:
-        case "Caiua": rho = 1069.54 - 0.6379*T
+        case "Alves": rho = 1069.54 - 0.6379*T
         case "Akbarzadeh": rho = 1078.96 - 0.6379*T
         case "Yanes": rho = 880.0
         case _: rho = 1078.96 - 0.6379*T  # Em caso de erro, usa-se Akbarzadeh como padrão.
@@ -65,7 +65,7 @@ def calcular_propriedades_aromáticos(T, correlação_densidade_aromáticos, cor
 
     # Densidade (kg/m³)
     match correlação_densidade_aromáticos:
-        case "Caiua": rho = 1164.73 - 0.5942*T
+        case "Alves": rho = 1164.73 - 0.5942*T
         case "Akbarzadeh": rho = 1184.47 - 0.5942*T
         case "Yanes": rho = 990.0
         case _: rho = 1184.47 - 0.5942*T  # Em caso de erro, usa-se Akbarzadeh como padrão.

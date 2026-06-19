@@ -5,7 +5,7 @@ from scipy.constants import R  # m3*Pa/mol*K
 
 
 # Função
-def calcular_propriedades_precipitante(T, precipitante, correlação_delta_precipitante='Akbarzadeh'):
+def calcular_propriedades_precipitante(T, precipitante, correlação_delta_precipitante):
     """ Calcula as propriedades do precipitante/alcano na temperatura de interesse.
     
     Inputs:
@@ -34,16 +34,16 @@ def calcular_propriedades_precipitante(T, precipitante, correlação_delta_preci
     # Cálculo do parâmetro de solubilidade
     match correlação_delta_precipitante:
         case 'Akbarzadeh':
-            Delta_H_vap = 3492.8 + 276.54 * MM + 0.524 * (MM ** 2) if MM < 60e3 \
+            Delta_H_vap = 3492.8 + 276.54 * MM + 0.524 * (MM ** 2) if MM < 60 \
                 else 103.65 + 368.7 * MM - 0.0603 * (MM ** 2)
             delta_25C = ((Delta_H_vap - 298.15*R) / V) ** 0.5
             delta = delta_25C - 0.0232 * (T - 298.15)  # MPa**0.5
         case 'Vargas':
-            delta = 17.347 * rho + 2.904 if MM > 60e3 \
+            delta = 17.347 * rho + 2.904 if MM > 60 \
                 else 2.904 + 26.302 * rho - 20.5618 * (rho ** 2) + 12.0425 * (rho ** 3)  # MPa**0.5
         case _:
             # Em caso de erro, usa-se Akbarzadeh como padrão.
-            Delta_H_vap = 3492.8 + 276.54 * MM + 0.524 * (MM ** 2) if MM < 60e3 \
+            Delta_H_vap = 3492.8 + 276.54 * MM + 0.524 * (MM ** 2) if MM < 60 \
                 else 103.65 + 368.7 * MM - 0.0603 * (MM ** 2)
             delta_25C = ((Delta_H_vap - 298.15 * R) / V) ** 0.5
             delta = delta_25C - 0.0232 * (T - 298.15)  # MPa**0.5
@@ -131,17 +131,17 @@ if __name__ == "__main__":
     substancia_teste = 'isobutano'
     MM_teste, Tc_teste, wSRK_teste, Vstar_teste = obter_parâmetros_HBT('isobutano')
     rho_teste = calcular_densidadehbt(310.93, MM_teste, Tc_teste, wSRK_teste, Vstar_teste)
-    V_teste = 58.12*1e-3/rho_teste
+    V_teste = 58.12/rho_teste
     print("\n|---------------------------------------------------------------------------------------------------------"
           "-------------------------|")
     print("| TESTE DA FUNCAO 'calcular_densidadehbt'")
-    print(f"| Volume molar calculado: {V_teste*1e6:.2f} cm3/mol")
+    print(f"| Volume molar calculado: {V_teste*1e3  :.2f} cm3/mol")
     print(f"| Volume molar gabarito: {108.9} cm3/mol")
     print("|-----------------------------------------------------------------------------------------------------------"
           "-----------------------|")
 
     # Função 'calcular_propriedades_precipitante'
-    MM_teste, rho_teste, delta_teste, V_teste = calcular_propriedades_precipitante(298.15, 'n-heptano')
+    MM_teste, rho_teste, delta_teste, V_teste = calcular_propriedades_precipitante(298.15, 'n-heptano', 'Akbarzadeh')
     print("\n|---------------------------------------------------------------------------------------------------------"
           "-------------------------|")
     print("| TESTE DA FUNCAO 'calcular_propriedades_precipitante'")

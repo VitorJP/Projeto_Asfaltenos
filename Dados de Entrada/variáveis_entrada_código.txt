@@ -58,13 +58,22 @@ A seguir, são apresentadas as variáveis a serem lidas pelo programa principal:
 |                              |                                 |                      na fórmula de Gauss-Kronrod    |
 |                              |                                 |         (trapezios) regra dos trapézios generalizada|
 +------------------------------+---------------------------------+-----------------------------------------------------+
+| Propriedades do precipitante | correlação_delta_precipitante   | correlação para o cálculo do parâmetro de           |
+|                              |                                 | solubilidade do precipitante                        |
+|                              |                                 | opções: (Akbarzadeh)                                |
+|                              |                                 |         (Vargas)                                    |
+|                              |                                 | Obs: a opção 'Akbarzadeh' é apresentada na tese     |
+|                              |                                 |      de Asok Kumar Tharanivasan (2012)              |                         |
+|                              |                                 | Obs: a opção 'Vargas' é apresentada no artigo de    |
+|                              |                                 |      Vargas (2009)                                  |
++------------------------------+---------------------------------+-----------------------------------------------------+
 | Propriedades dos saturados   | correlação_densidade_saturados  | correlação para o cálculo da densidade de saturados |
-|                              |                                 | opções: (Caiua)                                     |
+|                              |                                 | opções: (Alves)                                     |
 |                              |                                 |         (Akbarzadeh)                                |
 |                              |                                 |         (Yanes)                                     |
-|                              |                                 | Obs: a opção 'Caiua' é a correlação presente na     |
+|                              |                                 | Obs: a opção 'Alves' é a correlação presente na     |
 |                              |                                 |      p. 6923 do artigo de Caiuã Araújo Alves (2019) |
-|                              |                                 |      a opção 'Akbarzadeh' é a correlação presente   |
+|                              |                                 | Obs: a opção 'Akbarzadeh' é a correlação presente   |
 |                              |                                 |      na p. 77 da tese de Asok Kumar                 |
 |                              |                                 |      Tharanivasan (2012)                            |
 |                              |                                 | Obs: a opção 'Yanes' lê o valor da p. 39 da         |
@@ -87,10 +96,10 @@ A seguir, são apresentadas as variáveis a serem lidas pelo programa principal:
 |                              |                                 |      (2018), o qual é válido apenas para 25 ºC      |
 +------------------------------+---------------------------------+-----------------------------------------------------+
 | Propriedades dos aromáticos  | correlação_densidade_aromáticos | correlação para o cálculo da densidade de aromáticos|
-|                              |                                 | opções: (Caiua)                                     |
+|                              |                                 | opções: (Alves)                                     |
 |                              |                                 |         (Akbarzadeh)                                |
 |                              |                                 |         (Yanes)                                     |
-|                              |                                 | Obs: a opção 'Caiua' é a correlação presente na     |
+|                              |                                 | Obs: a opção 'Alves' é a correlação presente na     |
 |                              |                                 |      p. 6924 do artigo de Caiuã Araújo Alves (2019) |
 |                              |                                 |      a opção 'Akbarzadeh' é a correlação presente na|
 |                              |                                 |      p. 77 da tese de Asok Kumar Tharanivasan (2012)|
@@ -225,11 +234,11 @@ A seguir, são apresentadas as variáveis a serem lidas pelo programa principal:
 |                              | x_da_yield_curve                | variáveis para o eixo x do gráfico de yield curve   |
 |                              |                                 | plotado pelo programa na etapa de exibição dos      |
 |                              |                                 | resultados                                          |
-|                              |                                 | opções: (molar)      Fração molar de alcano         |
-|                              |                                 |         (mass)       Fração mássica de alcano       |
-|                              |                                 |         (volume)     Fração volumétrica de alcano   |
-|                              |                                 |         (solubility) Parâmetro de solubilidade da   |
-|                              |                                 |                      fase líquida/óleo sobrenadante |
+|                              |                                 | opções: (molar)        Fração molar de alcano       |
+|                              |                                 |         (massa)        Fração mássica de alcano     |
+|                              |                                 |         (volume)       Fração volumétrica de alcano |
+|                              |                                 |         (solubilidade) Parâmetro de solubilidade da |
+|                              |                                 |                        fase líquida/óleo            |
 +------------------------------+---------------------------------+-----------------------------------------------------+
 | Regressão dos parâmetros     | tipo_regressão_equilibrio       | define quais parâmetros serão regredidos pelo       |
 |                              |                                 | programa principal na seção de equilíbrio de fases  |
@@ -270,8 +279,9 @@ MWmin:750
 MWmax:30000
 alfa:3.5
 MWavg:3620
-tipo_cálculo_MM_agregados:medio
+tipo_cálculo_MM_agregados:superior
 método_integração_FDP_Gamma:trapezios
+correlação_delta_precipitante:Akbarzadeh
 correlação_densidade_saturados:Akbarzadeh
 correlação_delta_saturados:Akbarzadeh
 correlação_densidade_aromáticos:Akbarzadeh
@@ -289,8 +299,8 @@ kw1_cinético:683.75
 kw2_cinético:0.030
 tipo_cálculo_equilíbrio:regressao
 tipo_cálculo_cinética:nao
-x_da_yield_curve:mass
+x_da_yield_curve:massa
 tipo_regressão_equilibrio:2
 algoritmo_otimização:1
-nome_planilha:Powers_VB-B2
+nome_planilha:Rolim_A_hept
 +------------------------------+---------------------------------+-----------------------------------------------------+

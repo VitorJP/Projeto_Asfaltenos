@@ -63,7 +63,7 @@ def ler_variáveis_entrada_código(diretório):
         linhas = arquivo.readlines()
 
     # Armazenamento apenas das linhas que contém os valores das variáveis a serem lidas pelo programa principal
-    linhas_úteis = linhas[-29:-1]
+    linhas_úteis = linhas[-30:-1]
 
     # Removendo o nome da varíavel da linha
     linhas_úteis_valores = [linha.split(":", 1)[1] if ":" in linha else linha for linha in linhas_úteis]
@@ -79,31 +79,32 @@ def ler_variáveis_entrada_código(diretório):
     MWavg = float(linhas_úteis_limpas[4])
     tipo_cálculo_MM_agregados = linhas_úteis_limpas[5]
     método_integração_FDP_Gamma = linhas_úteis_limpas[6]
-    correlação_densidade_saturados = linhas_úteis_limpas[7]
-    correlação_delta_saturados = linhas_úteis_limpas[8]
-    correlação_densidade_aromáticos = linhas_úteis_limpas[9]
-    correlação_delta_aromáticos = linhas_úteis_limpas[10]
-    correlação_densidade_resinas = linhas_úteis_limpas[11]
-    correlação_delta_resinas = linhas_úteis_limpas[12]
-    correlação_densidade_agregados = linhas_úteis_limpas[13]
-    correlação_delta_agregados = linhas_úteis_limpas[14]
-    Alinha_delta_agregados = float(linhas_úteis_limpas[15])
-    c_delta_agregados = float(linhas_úteis_limpas[16])
-    d_delta_agregados = float(linhas_úteis_limpas[17])
-    kt1_cinético = float(linhas_úteis_limpas[18])
-    kt2_cinético = float(linhas_úteis_limpas[19])
-    kw1_cinético = float(linhas_úteis_limpas[20])
-    kw2_cinético = float(linhas_úteis_limpas[21])
-    tipo_cálculo_equilíbrio = linhas_úteis_limpas[22]
-    tipo_cálculo_cinética = linhas_úteis_limpas[23]
-    x_yield_curve = linhas_úteis_limpas[24]
-    tipo_regressão_equilibrio = int(linhas_úteis_limpas[25])
-    algoritmo_otimização = int(linhas_úteis_limpas[26])
-    nome_planilha = linhas_úteis_limpas[27]
+    correlação_delta_precipitante = linhas_úteis_limpas[7]
+    correlação_densidade_saturados = linhas_úteis_limpas[8]
+    correlação_delta_saturados = linhas_úteis_limpas[9]
+    correlação_densidade_aromáticos = linhas_úteis_limpas[10]
+    correlação_delta_aromáticos = linhas_úteis_limpas[11]
+    correlação_densidade_resinas = linhas_úteis_limpas[12]
+    correlação_delta_resinas = linhas_úteis_limpas[13]
+    correlação_densidade_agregados = linhas_úteis_limpas[14]
+    correlação_delta_agregados = linhas_úteis_limpas[15]
+    Alinha_delta_agregados = float(linhas_úteis_limpas[16])
+    c_delta_agregados = float(linhas_úteis_limpas[17])
+    d_delta_agregados = float(linhas_úteis_limpas[18])
+    kt1_cinético = float(linhas_úteis_limpas[19])
+    kt2_cinético = float(linhas_úteis_limpas[20])
+    kw1_cinético = float(linhas_úteis_limpas[21])
+    kw2_cinético = float(linhas_úteis_limpas[22])
+    tipo_cálculo_equilíbrio = linhas_úteis_limpas[23]
+    tipo_cálculo_cinética = linhas_úteis_limpas[24]
+    x_yield_curve = linhas_úteis_limpas[25]
+    tipo_regressão_equilibrio = int(linhas_úteis_limpas[26])
+    algoritmo_otimização = int(linhas_úteis_limpas[27])
+    nome_planilha = linhas_úteis_limpas[28]
 
     return (
         n_agregados, MWmin, MWmax, alfa, MWavg, tipo_cálculo_MM_agregados, método_integração_FDP_Gamma, 
-        correlação_densidade_saturados, correlação_delta_saturados,
+        correlação_delta_precipitante, correlação_densidade_saturados, correlação_delta_saturados,
         correlação_densidade_aromáticos, correlação_delta_aromáticos,
         correlação_densidade_resinas, correlação_delta_resinas,
         correlação_densidade_agregados, correlação_delta_agregados, 

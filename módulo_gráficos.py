@@ -22,7 +22,7 @@ def plotar_yield_curves(eixo_x, yields_exp, yields_calc, yield_max, informaçõe
     """
 
     # Desempacotando a lista 'informações_auxiliares'
-    DMA_formatado, tipo_cálculo, tipo_regressão, algoritmo_otimização, variável, nome_planilha = informações_auxiliares
+    DMA_formatado, regressao, tipo_regressão, algoritmo_otimização, variável, nome_planilha = informações_auxiliares
     ymax = 10 * ((max(yield_max, max(yields_exp), max(yields_calc)) // 0.10) + 1)
 
     # Ajuste para a variável do eixo x
@@ -72,7 +72,7 @@ def plotar_yield_curves(eixo_x, yields_exp, yields_calc, yield_max, informaçõe
     plt.grid(color="k", linestyle="-", linewidth=0.1)
 
     # Nome do arquivo do gráfico a ser salvo
-    if tipo_cálculo == 'predicao':
+    if not regressao:
         nome_arquivo_gráfico = f"{nome_planilha}_YIELDCURVE_{variável}.png"
     else:
         nome_arquivo_gráfico = f"{nome_planilha}_YIELDCURVE_{variável}_tipo_reg_{tipo_regressão}_" \
@@ -80,7 +80,7 @@ def plotar_yield_curves(eixo_x, yields_exp, yields_calc, yield_max, informaçõe
     
     # Salvando o gráfico
     diretório_da_pasta_deste_modulo = os.path.dirname(os.path.abspath(__file__))
-    if tipo_cálculo == 'predicao':
+    if not regressao:
         diretório_png = os.path.join(diretório_da_pasta_deste_modulo, "Resultados",
                                      "Resultados_Equilíbrio", "Predição", nome_arquivo_gráfico)
     else:
