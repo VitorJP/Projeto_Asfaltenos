@@ -4,25 +4,23 @@ import scipy as scp
 from scipy.constants import R  # m3*Pa/mol*K
 
 
-def obter_parâmetros_experimentais_da_yield_curve(xs_prec, yield_curve):
-    yield_max = yield_curve[-1]
-    x_onset = 0
+def obter_ponto_de_onset(xs_precipitante, yield_curve):
+    onset = 0
     for i_onset in range(len(yield_curve)):
         if yield_curve[i_onset] > 0.005:
-            x_onset = xs_prec[i_onset] if i_onset == 0 else xs_prec[i_onset - 1]
+            onset = xs_precipitante[i_onset] if i_onset == 0 else xs_precipitante[i_onset - 1]
             break
-    return x_onset, yield_max
+    return onset
 
 
-def calcular_yields_tempo_infinito(x_prec, x_onset, yield_max, k1, k2):
-    return yield_max / (1 + k1 * np.exp(-(x_prec - x_onset)/k2))
+def calcular_yields_tempo_infinito(xs_precipitante, params):
+    return params.yield_max / (1 + params.kc1 * np.exp(-(xs_precipitante - params.onset)/params.kc2))
 
 
-def calcular_yields_temporais(tempos, x_solv, x_onset, yield_max, kxs_1, kxs_2, kts_1, kts_2):
+def calcular_yields_temporais(tempos, xs_precipitante, yields_tempo_infinito, params):
     tempos = np.asarray(tempos)[:, None]
-    taus = kts_1 * (x_solv ** kts_2)
-    yields_t_inf = calcular_yields_tempo_infinito(x_solv, x_onset, yield_max, kxs_1, kxs_2)
-    return yields_t_inf * (1 - np.exp(- tempos / taus)), taus
+    taus = params.kt1 * (xs_precipitante ** params.kt2)
+    return yields_tempo_infinito * (1 - np.exp(- tempos / taus)), taus
 
 
 def criar_curva_de_equilíbrio(xs_prec_exp, x_prec_onset, yield_max, ks_x, x_max=95):
@@ -52,7 +50,7 @@ def deposição_cumulativa_asfaltenos():
 # ******************************************************************************************************************** #
 # INÍCIO DO TESTE
 if __name__ == "__main__":
-    from módulo_gráficos import plotar_yield_curves_cinéticas
+    from módulo_exibição_de_resultados import plotar_yield_curves_cinéticas
 
     par_cin = [683.75, 0.030, 0.2801, -8.132]
     lista_t = [2, 4, 6, 8, 16, 24]

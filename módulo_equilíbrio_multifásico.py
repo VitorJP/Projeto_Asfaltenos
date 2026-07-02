@@ -7,8 +7,25 @@ import chemicals
 from fluids.numerics import UnconvergedError
 
 # Importação de outros módulos deste projeto
-from módulo_composições import normalizar_composição, simplificar_composição_SARA
+from módulo_composições import normalizar_composição
 
+
+# Função temporária (substituir com a POO)
+def simplificar_composição_SARA(frações_completo):
+    """
+    Simplifica a composição do sistema de [Solvente, S, A, R, Asf0, Asf1, ...] para [Solvente, S, A, R, Asf_total]
+
+        Inputs:
+            frações_completo (array)      : composição em termos de [Solvente, S, A, R, Asf0, Asf1, ...]
+
+        Outputs:
+            frações_simplificado (array)  : composição em termos de [Solvente, S, A, R, Asf_total]
+    """
+
+    frações_simplificado = np.zeros(5)
+    frações_simplificado[:4] = frações_completo[:4]
+    frações_simplificado[4] = np.sum(frações_completo[4:])
+    return frações_simplificado
 
 # ==================================================================================================================== #
 # Subfunção
@@ -454,11 +471,7 @@ if __name__ == "__main__":
     # 0.2 - Módulos
     from módulo_leitura_dados import ler_variáveis_entrada_código, ler_dados_experimentais
     from módulo_composições import normalizar_composição, fracionar_composição_SARA
-    from módulo_propriedades_precipitante import calcular_propriedades_solvente
-    from módulo_propriedades_frações_SAR import calcular_propriedades_saturados, calcular_propriedades_aromáticos, \
-        calcular_propriedades_resinas
     from módulo_distribuição_massa_molar import gerar_distribuição_massa_molar
-    from módulo_propriedades_agregados import calcular_propriedades_agregados
 
     # PARTE 1 - LEITURA DE INFORMAÇÕES BÁSICAS
 
@@ -516,7 +529,7 @@ if __name__ == "__main__":
     xsagregados = normalizar_composição(xsagregados)  # normalização das frações molares
 
     # 3.1.2 - Densidades, parâmetros de solubilidades e volumes molares
-    rhosagregados, deltasagregados, Vsagregados = calcular_propriedades_agregados(
+    rhosagregados, deltasagregados, Vsagregados = calcular_propriedades_agregados_asfaltenos(
         T, MMsagregados, correlação_densidade_agregados, correlação_delta_agregados,
         Alinha_delta_agregados, c_delta_agregados, d_delta_agregados)
 

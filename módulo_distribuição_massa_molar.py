@@ -99,8 +99,8 @@ if __name__ == "__main__":
     from tabulate import tabulate
 
     # Cálculos a partir da função 'gerar_distribuição_massa_molar'
-    MMsagregados, wsagregados, xsagregados = gerar_distribuição_massa_molar(2.7822, 1859, 30, 700, 7200,
-                                                                            "superior", "trapezios")
+    MMs_agregados, ws_agregados, xs_agregados = gerar_distribuição_massa_molar(2.7822, 1859, 30, 700, 7200,
+                                                                               "superior", "trapezios")
 
     # Leitura do arquivo recebido por e-mail
     diretório_deste_modulo = os.path.dirname(__file__)
@@ -108,18 +108,18 @@ if __name__ == "__main__":
                                      'Outras referências', 'Sobre distribuição gama', 'distribuição_P1_Yanes.xlsx')
     df1 = pd.read_excel(diretório_do_xlsx, "Plan1")
     df1 = df1.drop(index=0)  # apagando a linha 0 do dataframe
-    MMsagregados_Yanes = df1.iloc[:, 1].to_numpy()
-    xssagregados_Yanes = df1.iloc[:, 2].to_numpy()
+    MMs_agregados_Yanes = df1.iloc[:, 1].to_numpy()
+    xs_agregados_Yanes = df1.iloc[:, 2].to_numpy()
 
     # DataFrame comparando os resultados
     arredondar = 4
-    df2 = pd.DataFrame({"MMs_Gaba": np.round(MMsagregados_Yanes, arredondar),
-                        "MMs_Calc": np.round(MMsagregados, arredondar),
-                        "MMs_DRA(%)": np.round(100 * np.abs(MMsagregados_Yanes - MMsagregados) / MMsagregados_Yanes,
+    df2 = pd.DataFrame({"MMs_Gaba": np.round(MMs_agregados_Yanes, arredondar),
+                        "MMs_Calc": np.round(MMs_agregados, arredondar),
+                        "MMs_DRA(%)": np.round(100 * np.abs(MMs_agregados_Yanes - MMs_agregados) / MMs_agregados_Yanes,
                                                arredondar),
-                        "xs_Gaba": np.round(xssagregados_Yanes, arredondar),
-                        "xs_Calc": np.round(xsagregados, arredondar),
-                        "xs_DRA(%)": np.round(100 * np.abs(xssagregados_Yanes - xsagregados) / xssagregados_Yanes,
+                        "xs_Gaba": np.round(xs_agregados_Yanes, arredondar),
+                        "xs_Calc": np.round(xs_agregados, arredondar),
+                        "xs_DRA(%)": np.round(100 * np.abs(xs_agregados_Yanes - xs_agregados) / xs_agregados_Yanes,
                                               arredondar)})
 
     # Exibição dos resultados

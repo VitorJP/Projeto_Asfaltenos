@@ -3,6 +3,7 @@ import numpy as np
 import scipy as scp
 from scipy.constants import R  # m3*Pa/mol*K
 from itertools import combinations, permutations
+from copy import deepcopy
 # import chemicals
 
 # Importação de outros módulos deste projeto
@@ -453,7 +454,7 @@ def identificar_composição_com_G_mínimo(ws_candidatas, zs, dados_modelo_termo
 
 
 # Função
-def calcular_ELL(T, zs, deltas, Vs, xsagregados, MMs):
+def calcular_ELL(T, zs, propriedades):
     """ Calcula o beta da proporção entre as fases e as composições das fases leve e pesada (base molar).
 
         Inputs:
@@ -479,13 +480,14 @@ def calcular_ELL(T, zs, deltas, Vs, xsagregados, MMs):
     zs[zs < 1e-8] = 0
     zs = normalizar_composição(zs)
 
+    xsagregados = deepcopy(propriedades.asfaltenos.x)
     xsagregados[xsagregados < 1e-8] = 0
     xsagregados = normalizar_composição(xsagregados)
 
     # Declaração do Dicionário do Modelo Termodinâmico
     dados_modelo_termodinamico = {
         "modelo": "Flory-Huggins",  # Escolha do Modelo
-        "parâmetros": [T, Vs, deltas],  # Parâmetros necessários para o Modelo escolhido
+        "parâmetros": [T, propriedades.Vs, propriedades.deltas],  # Parâmetros necessários para o Modelo escolhido
     }
 
     chute_inicial_asfaltenico, printar = True, False
@@ -510,43 +512,11 @@ def calcular_ELL(T, zs, deltas, Vs, xsagregados, MMs):
         duas_fases = True if G_opt <= 0.0 else False
 
     if printar:
-        printar_dados(zs, T, G_opt, beta_opt, xs_L_opt, xs_H_opt, MMs, duas_fases)
+        printar_dados(zs, T, G_opt, beta_opt, xs_L_opt, xs_H_opt, propriedades.MMs, duas_fases)
+
+    xs_L_opt, xs_H_opt = normalizar_composição(xs_L_opt), normalizar_composição(xs_H_opt)
 
     return beta_opt, xs_L_opt, xs_H_opt, n_iter
-
-
-# ==================================================================================================================== #
-# Função 
-def calcular_yield_asfaltenos(betarr, xsL, xsH, MMs):
-    """ Calcula o yield fracional de asfalteno após o cálculo de equilíbrio.
-    
-    Inputs:
-        betarr (float) : Parâmetro beta de Rachford-Rice
-        xsL (array)    : composição molar da fase leve
-        xsH (array)    : composição molar da fase pesada 
-        MMs (array)    : massas molares (kg/mol)
-
-    Outputs:
-        yield_calc (float): yield fracional de asfalteno (calculado)
-    """
-
-    # Nº mols de alimentação, da fase pesada e da fase leve
-    nF = 1  # mol (base de cálculo)
-    nH = betarr * nF
-    nL = nF - nH
-
-    # Nº mols e massa dos componentes distribuídos nas duas fases
-    nsL, nsH = xsL * nL, xsH * nH  # mol
-    msL, msH = nsL * MMs, nsH * MMs  # kg
-
-    # Massa de petróleo nas fase leve, fase pesada e alimentação
-    m_petróleo_L = msL[1:].sum()  # tirando o solvente
-    m_petróleo_H = msH[1:].sum()  # tirando o solvente (teoricamente, não há solvente na fase pesada)
-
-    # Yield
-    yield_calc = m_petróleo_H / (m_petróleo_L + m_petróleo_H)
-
-    return yield_calc
 
 # ******************************************************************************************************************** #
 #  ATENÇÃO: O CÓDIGO A SEGUIR SERÁ EXECUTADO APENAS QUANDO ESTE MÓDULO FOR RODADO COMO SCRIPT PRINCIPAL.               #

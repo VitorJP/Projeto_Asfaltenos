@@ -3,6 +3,9 @@ import os
 import numpy as np
 import pandas as pd
 
+# Importação de módulos internos
+from módulo_composições import normalizar_composição
+
 
 # Função
 def ler_variáveis_entrada_código(diretório):
@@ -116,6 +119,15 @@ def ler_variáveis_entrada_código(diretório):
 
 
 # Função
+def ler_lista_datasets(diretório):
+    diretório_excel = os.path.join(diretório, 'Dados de Entrada', 'database_yield_curves.xlsx')
+    df = pd.read_excel(diretório_excel, "CONTROLE DE DADOS")
+    lista_datasets = df.loc[df['Utilizável?'] == 'S', 'Nome Planilha'].to_list()
+
+    return lista_datasets
+
+
+# Função
 def ler_dados_experimentais(diretório, planilha):
     """ Lê o arquivo 'dados_experimentais_codigo_completo.xlsx'.
     
@@ -138,6 +150,7 @@ def ler_dados_experimentais(diretório, planilha):
     # Composição SARA
     SARA = df.iloc[3:7, 1].to_numpy()
     SARA = SARA*1e-2
+    SARA = normalizar_composição(SARA)
 
     # Temperatura
     T = df.iloc[7, 1] + 273.15
@@ -158,15 +171,20 @@ def ler_dados_experimentais(diretório, planilha):
     # Cortar apenas o final vazio
     dados_exp = dados_exp.loc[:ultima_linha]
 
+    # Dados de fração medidos da yield curve
     frações_solvente = dados_exp['w_solvente'].to_numpy()
     yields_exp = dados_exp['yield'].to_numpy()
 
+    # Número de dados
+    n_dados_exp = frações_solvente.shape[0]
+
     frações_petróleo = 1 - frações_solvente
-    ws_simplificados = np.column_stack((frações_solvente, frações_petróleo))
+    ws_exp = np.column_stack((frações_solvente, frações_petróleo))
     
-    return SARA, T, solvente, ws_simplificados, yields_exp
+    return SARA, T, solvente, ws_exp, yields_exp, n_dados_exp
 
 
+# Função
 def ler_dados_cinéticos(diretório, planilha):
 
     # Leitura do DataFrame
