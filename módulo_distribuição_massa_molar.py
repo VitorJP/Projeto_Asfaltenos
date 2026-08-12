@@ -2,10 +2,12 @@
 import numpy as np
 import scipy as scp
 
+# Importação de módulos internos
+from módulo_composições import normalizar_composição
+
 
 # Função
-def gerar_distribuição_massa_molar(alfa, MWavg, n_agregados, MWmin, MWmax, tipo_cálculo_MM_agregados,
-                                   método_integração_FDP_Gamma):
+def calcular_por_Distribuição_Gamma(alfa, MWavg, n_agregados, MWmin, MWmax, tipo_cálculo_MM_agregados):
     """ Calcula as massas molares, frações mássicas e frações molares dos agregados de asfaltenos.
        
     Inputs:
@@ -27,63 +29,53 @@ def gerar_distribuição_massa_molar(alfa, MWavg, n_agregados, MWmin, MWmax, tip
     """
 
     # Função FDP_Gamma
-    MWmono = MWmin
-    beta = (MWavg - MWmono) / alfa
-
     def f(MWi):
-        return (MWi - MWmono) ** (alfa - 1) / (beta ** alfa * scp.special.gamma(alfa)) * np.exp(-(MWi - MWmono) / beta)
+        return scp.stats.gamma.pdf(MWi, a=alfa, loc=MWmin, scale=(MWavg - MWmin)/alfa)
+        # return (MWi - MWmono)**(alfa - 1) / (beta ** alfa * scp.special.gamma(alfa)) * np.exp(-(MWi - MWmono) / beta)
 
     # Limites das faixas de massa molar
-    n_pontos = n_agregados + 1
-    MM_limites_faixas = np.linspace(MWmin, MWmax, n_pontos)
+    MM_limites_faixas = np.linspace(MWmin, MWmax, n_agregados + 1)
 
     # Massas molares dos agregados
     MMsagregados = np.zeros(n_agregados)
     match tipo_cálculo_MM_agregados:
         case "medio":
-            MWf = lambda MWi: MWi * f(MWi)  # Criando a função MWi*f(MWi)
+            def MWf(MWi):
+                return MWi * f(MWi)  # Criando a função MWi*f(MWi)
             for i in range(n_agregados):
                 numerador = scp.integrate.quad(MWf, MM_limites_faixas[i], MM_limites_faixas[i + 1])[0]
                 denominador = scp.integrate.quad(f, MM_limites_faixas[i], MM_limites_faixas[i + 1])[0]
                 MMsagregados[i] = numerador / denominador if denominador != 0 else MM_limites_faixas[i + 1]  # g/mol
                 # OBS: Caso a integração reduza o valor até se aproximar de zero, usar o caso "superior".
-        case "superior":
+        case "superior" | _:
             for i in range(n_agregados):
                 MMsagregados[i] = MM_limites_faixas[i + 1]  # g/mol
 
-    # Frações molares dos agregados
-    match método_integração_FDP_Gamma:
-        case "quadratura":
-            xsagregados = np.zeros(n_agregados)
-            denominador = scp.integrate.quad(f, MM_limites_faixas[0], MM_limites_faixas[-1])[0]
-            for i in range(n_agregados):
-                numerador = scp.integrate.quad(f, MM_limites_faixas[i], MM_limites_faixas[i + 1])[0]
-                xsagregados[i] = numerador / denominador
-        case "trapezios":
-            xsagregados = np.zeros(n_agregados)
-            MWs_denominador = MM_limites_faixas.copy()
-            fMWs_denominador = f(MWs_denominador)
-            denominador = np.trapezoid(fMWs_denominador, MWs_denominador)
-            for i in range(n_agregados):
-                MWs_numerador = MM_limites_faixas[i:i + 2]
-                fMWs_numerador = f(MWs_numerador)
-                numerador = np.trapezoid(fMWs_numerador, MWs_numerador)
-                xsagregados[i] = numerador / denominador
-        case _:  # Em caso de erro, usa-se 'trapezios' como padrão
-            xsagregados = np.zeros(n_agregados)
-            MWs_denominador = MM_limites_faixas.copy()
-            fMWs_denominador = f(MWs_denominador)
-            denominador = np.trapezoid(fMWs_denominador, MWs_denominador)
-            for i in range(n_agregados):
-                MWs_numerador = MM_limites_faixas[i:i + 2]
-                fMWs_numerador = f(MWs_numerador)
-                numerador = np.trapezoid(fMWs_numerador, MWs_numerador)
-                xsagregados[i] = numerador / denominador
+    xsagregados = (scp.stats.gamma.cdf(MM_limites_faixas[1:], a=alfa, loc=MWmin, scale=(MWavg - MWmin)/alfa)
+                   - scp.stats.gamma.cdf(MM_limites_faixas[:-1], a=alfa, loc=MWmin, scale=(MWavg - MWmin)/alfa))
 
-    # Frações mássicas dos agregados
+    # Frações mássicas e frações mássicas cumulativas dos agregados
     wsagregados = xsagregados * MMsagregados / ((xsagregados * MMsagregados).sum())
+    xsagregados, wsagregados = normalizar_composição(xsagregados), normalizar_composição(wsagregados)
+    wsagregados_cumulativa = np.cumsum(wsagregados)
 
-    return MMsagregados, wsagregados, xsagregados
+    return MMsagregados, xsagregados, wsagregados, wsagregados_cumulativa
+
+
+def calcular_por_Yen_Mullins(MW_min, n_nanoagregação, n_clusterização, x_Asf0, x_Asf1):
+    z0 = x_Asf0
+    z1 = x_Asf1 * (1.0 - z0)
+    z2 = 1.0 - z0 - z1
+
+    xsagregados = np.array([z0, z1, z2])
+    MMsagregados = np.array([MW_min, n_nanoagregação * MW_min, n_nanoagregação * n_clusterização * MW_min])
+
+    # Frações mássicas e frações mássicas cumulativas dos agregados
+    wsagregados = xsagregados * MMsagregados / ((xsagregados * MMsagregados).sum())
+    xsagregados, wsagregados = normalizar_composição(xsagregados), normalizar_composição(wsagregados)
+    wsagregados_cumulativa = np.cumsum(wsagregados)
+
+    return MMsagregados, xsagregados, wsagregados, wsagregados_cumulativa
 
 
 # ******************************************************************************************************************** #
@@ -99,8 +91,8 @@ if __name__ == "__main__":
     from tabulate import tabulate
 
     # Cálculos a partir da função 'gerar_distribuição_massa_molar'
-    MMs_agregados, ws_agregados, xs_agregados = gerar_distribuição_massa_molar(2.7822, 1859, 30, 700, 7200,
-                                                                               "superior", "trapezios")
+    MMs_agregados, xs_agregados, ws_agregados, ws_agregados_cumulativo = calcular_distribuição_massa_molar(
+        2.7822, 1859, 30, 700, 7200, "superior")
 
     # Leitura do arquivo recebido por e-mail
     diretório_deste_modulo = os.path.dirname(__file__)

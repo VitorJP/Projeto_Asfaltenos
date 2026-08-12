@@ -7,11 +7,26 @@ import matplotlib.pyplot as plt
 from tabulate import tabulate
 from matplotlib.ticker import MultipleLocator
 
-# Importação de módulos internos
-from módulo_cálculos_erros import absolute_deviations, absolute_relative_deviations, average_absolute_deviation, \
-    average_absolute_relative_deviation
+
+# ==================================================================================================================== #
+# Erros
+def absolute_deviations(valores_exp, valores_modelo):
+    return np.abs(valores_exp - valores_modelo)
 
 
+def average_absolute_deviation(valores_exp, valores_modelo):
+    return np.nanmean(np.abs(valores_exp - valores_modelo))
+
+
+def absolute_relative_deviations(valores_exp, valores_modelo):
+    return np.abs(valores_exp - valores_modelo) / valores_exp
+
+
+def average_absolute_relative_deviation(valores_exp, valores_modelo):
+    return np.nanmean(np.abs(valores_exp - valores_modelo) / valores_exp)
+
+
+# ==================================================================================================================== #
 # Função
 def exibir_resultados_equilíbrio(nome_planilha, config, sistema, propriedades, params, yields_exp, SARA):
 
@@ -20,15 +35,20 @@ def exibir_resultados_equilíbrio(nome_planilha, config, sistema, propriedades, 
                                                        sistema.fase_global, sistema.fase_leve)
 
     # Criação e impressão de Dataframe com os resultados
-    erro_geral = criar_tabela_dataframe(valores_x, x_label, yields_exp, sistema.yields_calc(propriedades.MMs),
-                                        sistema.betas, params, config)
+    erro_médio, erro_máximo = criar_tabela_dataframe(valores_x, x_label, yields_exp,
+                                                     sistema.yields_calc(propriedades.MMs),
+                                                     sistema.betas, params, config)
 
     # 6.3 - Criação dos gráficos:
     # 6.3.1 - Gráficos de yield curve (equilíbrio) e distribuição de massa molar
     if config.cálculo.plotar_gráficos:
-        informações_auxiliares = [erro_geral, x_label, params.variáveis_regressão, config.cálculo, nome_planilha]
-        plotar_yield_curves(valores_x, yields_exp, sistema.yields_calc(propriedades.MMs), SARA[-1], informações_auxiliares)
+        informações_auxiliares = [erro_médio, erro_máximo, x_label, params.variáveis_regressão,
+                                  config.cálculo, nome_planilha]
+        plotar_yield_curves(valores_x, yields_exp, sistema.yields_calc(propriedades.MMs), SARA[-1],
+                            informações_auxiliares)
         plotar_distribuição_massa_molar(propriedades.asfaltenos, params, informações_auxiliares)
+
+    return erro_médio, erro_máximo
 
 
 # Função
@@ -68,10 +88,12 @@ def criar_tabela_dataframe(valores_x, x_label, yields_exp, yields_calc, betas, p
     # 6.1.2 - Criação de listas com os resultados formatados
     ADs = None if no_experimental_data else absolute_deviations(yields_exp, yields_calc)
     AAD = None if no_experimental_data else average_absolute_deviation(yields_exp, yields_calc)
+    max_AD = None if no_experimental_data else max(ADs)
 
     ADs_formatado = ["não disponível" for yield_calc in yields_calc] if no_experimental_data \
         else [f"{100 * AD:.2f}%" for AD in ADs]
-    AAD_formatado = "não disponível" if no_experimental_data else f"{100 * AAD:.4f}%"
+    AAD_formatado = "não disponível" if no_experimental_data else f"{100 * AAD:.8f}%"
+    max_AD_formatado = "não disponível" if no_experimental_data else f"{100 * max_AD:.8f}%"
 
     valores_x_formatado = [f"{100 * valor_x:.2f}%" for valor_x in valores_x] if x_label != "Parâmetro de Solubilidade" \
         else [f"{valor_x:.2f} MPa^0.5" for valor_x in valores_x]
@@ -91,13 +113,14 @@ def criar_tabela_dataframe(valores_x, x_label, yields_exp, yields_calc, betas, p
          })
 
     if config.cálculo.tipo_cálculo_equilíbrio:
-        print("Parâmetros estimados:", {variável: f"{getattr(params, variável):.2f}"
+        print("Parâmetros estimados:", {variável: f"{getattr(params, variável):.8f}"
                                         for variável in params.variáveis_regressão})
     print()
-    print(f"Desvio Médio Absoluto | AAD (%): {AAD_formatado}")
+    print(f"Desvio Absoluto Médio : {AAD_formatado}")
+    print(f"Desvio Absoluto Máximo: {max_AD_formatado}")
     print(f"{tabulate(df_resultados, headers=df_resultados.columns, tablefmt='pretty', showindex=False)}")
 
-    return AAD_formatado
+    return AAD, max_AD
 
 
 # ==================================================================================================================== #
@@ -120,7 +143,7 @@ def plotar_yield_curves(x_valores, y_valores_exp, y_valores_calc, y_valores_max,
     """
 
     # Desempacotando a lista 'informações_auxiliares'
-    erro_geral, x_label, variáveis_regressão, cálculo, nome_planilha = informações_auxiliares
+    erro_médio, erro_máximo, x_label, variáveis_regressão, cálculo, nome_planilha = informações_auxiliares
     ymax = 10 * ((max(y_valores_max, max(y_valores_exp), max(y_valores_exp)) // 0.10) + 1)
 
     # Ajuste para a variável do eixo x
@@ -131,7 +154,8 @@ def plotar_yield_curves(x_valores, y_valores_exp, y_valores_calc, y_valores_max,
         xmin, xmax = 15, 25
 
     # Título
-    plt.title(f"YIELD CURVE ({cálculo.x_yield_curve}) - DMA(%): {erro_geral}", fontsize=16, fontweight="bold")
+    plt.title(f"YIELD CURVE ({cálculo.x_yield_curve}) - AAD: {erro_médio} | max AD: {erro_máximo}",
+              fontsize=16, fontweight="bold")
 
     # Série de dados experimentais
     # Obs: se todos os yields experimentais são nulos, a curva experimental é plotada na cor branca (desaparece)
@@ -196,16 +220,20 @@ def plotar_distribuição_massa_molar(asfaltenos, params, informações_auxiliar
     """
 
     # Desempacotando a lista 'informações_auxiliares'
-    erro_geral, x_label, variáveis_regressão, cálculo, nome_planilha = informações_auxiliares
+    erro_médio, erro_máximo, x_label, variáveis_regressão, cálculo, nome_planilha = informações_auxiliares
 
     # Título
-    plt.title(f"DIST. MASSA MOLAR - DMA(%): {erro_geral}", fontsize=16, fontweight="bold")
+    plt.title(f"GAMMA DIST. - AAD: {erro_médio} | max AD: {erro_máximo}", fontsize=16, fontweight="bold")
 
     # Série de dados
     plt.plot(asfaltenos.MM, asfaltenos.x, "o-", markersize=9, mfc="white", mec="black", color="black")
 
     # Legenda
-    plt.legend([f"alfa = {params.alfa:.4f}\nMM avg = {params.MW_avg:.2f} g/mol"], fontsize=12)
+    plt.legend([f"n_agr = {params.n_agregados}\n"
+                f"alfa = {params.alfa:.4f}\n"
+                f"MM min = {params.MW_min:.2f} g/mol"
+                f"MM avg = {params.MW_avg:.2f} g/mol"
+                f"MM max = {params.MW_max:.2f} g/mol"], fontsize=12, loc='best')
 
     # Títulos dos eixos, fontes das marcas de escala
     plt.xlabel("Massa molar (g/mol)", fontsize=14)
@@ -234,8 +262,8 @@ def plotar_distribuição_massa_molar(asfaltenos, params, informações_auxiliar
     pass
 
 
-def plotar_yield_curves_cinéticas(x_valores, tempos, y_valores_eq, y_valores_exp, y_valores_calc,
-                                  informações_auxiliares):
+# Função
+def plotar_yield_curves_cinéticas(x_valores, ts, y_valores_eq, y_valores_exp, y_valores_calc, informações_auxiliares):
     """ Cria um gráfico contendo as curvas de solubilidade calculadas em diferentes tempos,
         a curva de equilíbrio (modelo) e a experimental.
 
@@ -266,10 +294,10 @@ def plotar_yield_curves_cinéticas(x_valores, tempos, y_valores_eq, y_valores_ex
 
     # Série de dados experimental e calculada em diferentes tempos
     cmap = plt.get_cmap("tab10")
-    for t in range(len(tempos)):
+    for t in range(len(ts)):
         color = cmap(t)
-        plt.plot(100 * x_valores, 100 * y_valores_exp[t, :], "o", mfc=color, mec="black", label=f"{tempos[t]}h (exp)")
-        plt.plot(100 * x_valores, 100 * y_valores_calc[t, :], c=color, label=f"{tempos[t]}h (calc)", ls='-', lw='2')
+        plt.plot(100 * x_valores, 100 * y_valores_exp[t, :], "o", mfc=color, mec="black", label=f"{ts[t]}h (exp)")
+        plt.plot(100 * x_valores, 100 * y_valores_calc[t, :], c=color, label=f"{ts[t]}h (calc)", ls='-', lw='2')
 
     # Série de dados de equilíbrio
     plt.plot(100 * x_valores, 100 * y_valores_eq, c="red", ls='--', lw='2', label="equilíbrio")
@@ -303,3 +331,58 @@ def plotar_yield_curves_cinéticas(x_valores, tempos, y_valores_eq, y_valores_ex
     plt.close()
 
     pass
+
+
+# ==================================================================================================================== #
+def salvar_resultados_excel(compilação_resultados, diretório):
+    diretório_do_xlsx = os.path.join(diretório, "Resultados", "Resultados_Equilíbrio",
+                                     "Database_Resultados_Equilíbrio.xlsx")
+
+    grupos = {}
+
+    for resultado in compilação_resultados:
+        (nome_planilha, SARA, T, precipitante, erro_médio, erro_máximo, variáveis, valores) = resultado
+
+        nome_aba = '+'.join(variáveis)
+        if nome_aba not in grupos:
+            grupos[nome_aba] = []
+
+        linha = {'Dataset': nome_planilha,
+                 'Temperatura (K)': T,
+                 'Precipitante': precipitante,
+                 'Saturados': SARA[0],
+                 'Aromáticos': SARA[1],
+                 'Resinas': SARA[2],
+                 'Asfaltenos': SARA[3],
+                 }
+        for variável, valor in zip(variáveis, valores):
+            linha[variável] = float(valor)
+        linha['Erro Médio'] = erro_médio
+        linha['Erro Máximo'] = erro_máximo
+
+        grupos[nome_aba].append(linha)
+
+    if os.path.exists(diretório_do_xlsx):
+        modo = "a"
+        engine = "openpyxl"
+        if_sheet_exists = "replace"
+    else:
+        modo = "w"
+        engine = "openpyxl"
+        if_sheet_exists = None
+
+    with pd.ExcelWriter(
+            diretório_do_xlsx,
+            engine=engine,
+            mode=modo,
+            if_sheet_exists=if_sheet_exists
+    ) as writer:
+
+        for aba, linhas in grupos.items():
+            df = pd.DataFrame(linhas)
+
+            df.to_excel(
+                writer,
+                sheet_name=aba[:31],  # limite do Excel
+                index=False
+            )

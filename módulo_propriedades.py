@@ -6,8 +6,7 @@ from scipy.constants import R  # m3*Pa/mol*K
 from dataclasses import dataclass, field, fields
 
 # Importação de módulos internos
-from módulo_distribuição_massa_molar import gerar_distribuição_massa_molar
-from módulo_composições import normalizar_composição
+from módulo_distribuição_massa_molar import calcular_por_Distribuição_Gamma, calcular_por_Yen_Mullins
 
 
 @dataclass(frozen=True)
@@ -65,6 +64,7 @@ class BasePropriedades:
 class ComponentePuro(BasePropriedades):
     # Definições
     nome: str | None = None
+    correlação_densidade: str | None = None
     correlação_delta: str | None = None
 
     # Propriedades para o modelo HBT
@@ -75,6 +75,27 @@ class ComponentePuro(BasePropriedades):
     def carregar_parâmetros_HBT(self):
         dados = DataBaseHBT.obter_dados(self.nome)
         self.MM, self.Tc, self.wSRK, self.Vstar = dados.MM, dados.Tc, dados.wSRK, dados.Vstar
+
+    def densidade_HBT(self, T):
+        """ Calcula a densidade do solvente utilizando o modelo de Hankinson-Brobst-Thomson.
+
+            Observações:
+                A implementação foi baseada no equacionamento do livro 'The Properties of Gases and Liquids',
+                de Reid, Prausnitz e Poling (1987)
+        """
+
+        # Variáveis auxiliares
+        Tr = T / self.Tc
+        aux = 1 - Tr
+
+        # Cálculos
+        a, b, c, d = -1.52816, 1.43907, -0.81446, 0.190454
+        e, f, g, h = -0.296123, 0.386914, -0.0427258, -0.0480645
+        Vr0 = 1 + a * aux ** (1 / 3) + b * aux ** (2 / 3) + c * aux + d * aux ** (4 / 3)
+        Vr1 = (e + f * Tr + g * Tr ** 2 + h * Tr ** 3) / (Tr - 1.00001)
+
+        self.V = self.Vstar * (Vr0 * (1 - self.wSRK * Vr1))
+        self.rho = self.MM / self.V
 
     def calcular_propriedades(self, T):
         """ Calcula as propriedades do precipitante/alcano na temperatura de interesse.
@@ -89,10 +110,12 @@ class ComponentePuro(BasePropriedades):
                 conforme citado por Tharanivasan (2012)
             """
 
-        # Propriedades
-        self.carregar_parâmetros_HBT()
-        self.densidade_HBT(T)  # kg/m³
-        self.V = (self.MM / self.rho) * 1e3  # cm³/mol
+        # Cálculo da densidade
+        match self.correlação_densidade:
+            case 'HBT' | _:
+                self.carregar_parâmetros_HBT()
+                self.densidade_HBT(T)  # kg/m³
+                self.V = (self.MM / self.rho) * 1e3  # cm³/mol
 
         # Cálculo do parâmetro de solubilidade
         match self.correlação_delta:
@@ -117,27 +140,6 @@ class ComponentePuro(BasePropriedades):
         self.delta = self.delta * 1e3  # Pa**0.5
         self.V = self.MM / self.rho  # m³/mol
 
-    def densidade_HBT(self, T):
-        """ Calcula a densidade do solvente utilizando o modelo de Hankinson-Brobst-Thomson.
-
-            Observações:
-                A implementação foi baseada no equacionamento do livro 'The Properties of Gases and Liquids',
-                de Reid, Prausnitz e Poling (1987)
-        """
-
-        # Variáveis auxiliares
-        Tr = T / self.Tc
-        aux = 1 - Tr
-
-        # Cálculos
-        a, b, c, d = -1.52816, 1.43907, -0.81446, 0.190454
-        e, f, g, h = -0.296123, 0.386914, -0.0427258, -0.0480645
-        Vr0 = 1 + a * aux ** (1 / 3) + b * aux ** (2 / 3) + c * aux + d * aux ** (4 / 3)
-        Vr1 = (e + f * Tr + g * Tr ** 2 + h * Tr ** 3) / (Tr - 1.00001)
-
-        self.V = self.Vstar * (Vr0 * (1 - self.wSRK * Vr1))
-        self.rho = self.MM / self.V
-
 
 @dataclass
 class Saturados(BasePropriedades):
@@ -153,29 +155,30 @@ class Saturados(BasePropriedades):
         """
 
         # Massa molar (g/mol)
-        self.MM = 460
+        self.MM = 440
 
         # Densidade (kg/m³)
         match self.correlação_densidade:
             case "Alves":
                 self.rho = 1069.54 - 0.6379 * T
-            case "Akbarzadeh":
-                self.rho = 1078.96 - 0.6379 * T
             case "Yanes":
                 self.rho = 880.0
-            case _:
-                self.rho = 1078.96 - 0.6379 * T  # Em caso de erro, usa-se Akbarzadeh como padrão.
+            case "Ramos_Pallares":
+                a0, b0, c0, a1, b1 = 1053.44, -0.5457, -0.000150, -3.113e-4, 3.150e-6
+                self.rho = (a0 + b0 * T + c0 * T**2) * np.exp((a1 + b1 * T) * 0.1)
+            case "Akbarzadeh" | _:
+                self.rho = 1078.96 - 0.6379 * T
 
         # Parâmetro de solubilidade (MPa**0.5)
         match self.correlação_delta:
-            case "Akbarzadeh":
-                self.delta = 22.381 - 0.0222 * T
             case "Tharanivasan":
                 self.delta = 23.021 - 0.0222 * T
             case "Yanes":
                 self.delta = 16.4
-            case _:
-                self.delta = 22.381 - 0.0222 * T  # Em caso de erro, usa-se Akbarzadeh como padrão.
+            case "Ramos_Pallares":
+                self.delta = 16.5 - 0.0222 * (T - 298.15)
+            case "Akbarzadeh" | _:
+                self.delta = 22.381 - 0.0222 * T
 
         # Ajuste de unidades
         self.MM = self.MM * 1e-3  # kg/mol
@@ -199,27 +202,28 @@ class Aromáticos(BasePropriedades):
         """
 
         # Massa molar (g/mol)
-        self.MM = 522
+        self.MM = 500
 
         # Densidade (kg/m³)
         match self.correlação_densidade:
             case "Alves":
                 self.rho = 1164.73 - 0.5942 * T
-            case "Akbarzadeh":
-                self.rho = 1184.47 - 0.5942 * T
             case "Yanes":
                 self.rho = 990.0
-            case _:
-                self.rho = 1184.47 - 0.5942 * T  # Em caso de erro, usa-se Akbarzadeh como padrão.
+            case "Ramos_Pallares":
+                a0, b0, c0, a1, b1 = 1163.45, -0.5457, -0.000150, -2.681e-4, 2.659e-6
+                self.rho = (a0 + b0 * T + c0 * T ** 2) * np.exp((a1 + b1 * T) * 0.1)
+            case "Akbarzadeh" | _:
+                self.rho = 1184.47 - 0.5942 * T
 
         # Parâmetro de solubilidade (MPa**0.5)
         match self.correlação_delta:
-            case "Akbarzadeh":
-                self.delta = 26.333 - 0.0204 * T
             case "Yanes":
                 self.delta = 20.3
-            case _:
-                self.delta = 26.333 - 0.0204 * T  # Em caso de erro, usa-se Akbarzadeh como padrão.
+            case "Ramos_Pallares":
+                self.delta = 19.3 - 0.0204 * (T - 298.15)
+            case "Akbarzadeh" | _:
+                self.delta = 26.333 - 0.0204 * T
 
         # Ajuste de unidades
         self.MM = self.MM * 1e-3  # kg/mol
@@ -235,7 +239,7 @@ class Resinas(BasePropriedades):
     correlação_densidade: str = ''
     correlação_delta: str = ''
 
-    def calcular_propriedades(self, T):
+    def calcular_propriedades(self, T, params):
         """ Calcula as propriedades das resinas na temperatura de interesse.
 
         Inputs:
@@ -243,26 +247,26 @@ class Resinas(BasePropriedades):
         """
 
         # Massa molar (g/mol)
-        self.MM = 1040
+        self.MM = 1050
 
         # Densidade (kg/m³)
         match self.correlação_densidade:
-            case "Yanes":
-                self.rho = 1044.0
             case "Akbarzadeh":
                 self.rho = 670 * (self.MM ** 0.0639)
-            case _:
-                self.rho = 1044.0  # Em caso de erro, usa-se Yanes como padrão.
+            case "Ramos_Pallares":
+                self.rho = 1047.0 - 0.659 * (T - 298.15)
+            case "Yanes" | _:
+                self.rho = 1044.0
 
         # Parâmetro de solubilidade (MPa**0.5)
         match self.correlação_delta:
-            case "Yanes":
-                self.delta = 19.3
             case "Akbarzadeh":
                 A = 0.579 - 0.00075 * T
-                self.delta = (A * self.rho) ** 0.5
-            case _:
-                self.delta = 19.3  # Em caso de erro, usa-se Yanes como padrão.
+                self.delta = np.sqrt(A * self.rho)
+            case "Ramos_Pallares":
+                self.delta = params.delta_min
+            case "Yanes" | _:
+                self.delta = 19.3
 
         # Ajuste de unidades
         self.MM = self.MM * 1e-3  # kg/mol
@@ -277,10 +281,12 @@ class AgregadosAsfaltenos(BasePropriedades):
     # Correlações
     correlação_densidade: str = ''
     correlação_delta: str = ''
+    correlação_fracionamento: str = ''
 
     # Fracionamento
     w: np.ndarray | None = None
     x: np.ndarray | None = None
+    w_cumu: np.ndarray | None = None
 
     @property
     def n_agregados(self):
@@ -288,36 +294,37 @@ class AgregadosAsfaltenos(BasePropriedades):
 
     def calcular_propriedades(self, T, params, config):
         # Massa molar (g/mol), fração mássica, fração molar
-        self.MM, self.w, self.x = gerar_distribuição_massa_molar(
-            params.alfa, params.MW_avg, params.n_agregados, params.MW_min, params.MW_max,
-            config.cálculo.tipo_cálculo_MM_agregados, config.cálculo.método_integração_FDP_Gamma
-        )
-        self.w, self.x = normalizar_composição(self.w), normalizar_composição(self.x)
+        match self.correlação_fracionamento:
+            case 'Yen_Mullins':
+                self.MM, self.x, self.w, self.w_cumu = calcular_por_Yen_Mullins(
+                    params.MW_molecula, params.n_nanoagregação, params.n_clusterização, params.x_Asf0, params.x_Asf1)
+            case 'Distribuição_Gamma' | _:
+                self.MM, self.x, self.w, self.w_cumu = calcular_por_Distribuição_Gamma(
+                    params.alfa, params.MW_avg, params.n_agregados, params.MW_min, params.MW_max,
+                    config.cálculo.tipo_cálculo_MM_agregados)
 
         # Densidade (kg/m³)
         match self.correlação_densidade:
-            case "Akbarzadeh":
-                self.rho = 670 * (self.MM ** 0.0639)
-            case "Alboudwarej":
-                self.rho = (self.MM / (1.493 * self.MM ** 0.936)) * 1e3
             case "Barrera":
                 self.rho = 1100 + 100 * (1 - np.exp(-self.MM / 3850))
-            case _:
-                self.rho = (self.MM / (1.493 * self.MM ** 0.936)) * 1e3
-            # Em caso de erro, usa-se Alboudwarej como padrão.
+            case "Ramos_Pallares":
+                rhos_25C = 1047 + (1300 - 1047) * (1 - np.exp(-params.s_Dist_rho * self.w_cumu))
+                ms = 3.1635 - 0.00239 * rhos_25C
+                self.rho = rhos_25C - ms * (T - 298.15)
+            case "Akbarzadeh" | _:
+                self.rho = 670 * (self.MM ** 0.0639)
 
         # Parâmetro de solubilidade (MPa**0.5)
         match self.correlação_delta:
             case "Barrera":
                 A = 0.579 - 0.00075 * T + params.A_Barrera
                 self.delta = np.sqrt(A * self.rho * params.c_Barrera * self.MM ** params.d_Barrera)
-            case "Tharanivasan":
+            case "Ramos_Pallares":
+                self.delta = params.delta_min + (params.delta_max - params.delta_min) \
+                             * (self.w_cumu ** params.n_Dist_delta)
+            case "Tharanivasan" | _:
                 A = 0.579 - 0.00075 * T
                 self.delta = np.sqrt(A * self.rho)
-            case _:
-                A = 0.579 - 0.00075 * T
-                self.delta = np.sqrt(A * self.rho)
-                # Em caso de erro, usa-se Tharanivasan como padrão.
 
         # Ajuste de unidades
         self.MM = self.MM * 1e-3  # kg/mol
@@ -329,6 +336,11 @@ class AgregadosAsfaltenos(BasePropriedades):
 
 @dataclass
 class Propriedades:
+
+    # Temperatura padrão de referência (25°C)
+    T: float = 298.15  # K
+
+    # Propriedades dos pseudocomponentes
     precipitante: ComponentePuro = field(default_factory=ComponentePuro)
     saturados: Saturados = field(default_factory=Saturados)
     aromáticos: Aromáticos = field(default_factory=Aromáticos)
@@ -375,31 +387,37 @@ class Propriedades:
                 [np.array([self.precipitante.V, self.saturados.V, self.aromáticos.V, self.resinas.V]),
                  self.asfaltenos.V])
 
-    def calcular_propriedades(self, T, nome_precipitante, config):
+    @classmethod
+    def calcular(cls, temperatura, nome_precipitante, params, config):
+        obj = cls()
+
+        obj.precipitante.nome = nome_precipitante
+        obj.T = temperatura
 
         # Declaração das correlações aplicadas
-        self.precipitante.nome = nome_precipitante
-        self.precipitante.correlação_delta = config.correlações.delta_precipitante
-        self.saturados.correlação_densidade = config.correlações.densidade_saturados
-        self.saturados.correlação_delta = config.correlações.delta_saturados
-        self.aromáticos.correlação_densidade = config.correlações.densidade_aromáticos
-        self.aromáticos.correlação_delta = config.correlações.delta_aromáticos
-        self.resinas.correlação_densidade = config.correlações.densidade_resinas
-        self.resinas.correlação_delta = config.correlações.delta_resinas
-        self.asfaltenos.correlação_densidade = config.correlações.densidade_asfaltenos
-        self.asfaltenos.correlação_delta = config.correlações.delta_asfaltenos
+        obj.precipitante.correlação_densidade = config.correlações.densidade_precipitante
+        obj.precipitante.correlação_delta = config.correlações.delta_precipitante
+
+        obj.saturados.correlação_densidade = config.correlações.densidade_saturados
+        obj.saturados.correlação_delta = config.correlações.delta_saturados
+
+        obj.aromáticos.correlação_densidade = config.correlações.densidade_aromáticos
+        obj.aromáticos.correlação_delta = config.correlações.delta_aromáticos
+
+        obj.resinas.correlação_densidade = config.correlações.densidade_resinas
+        obj.resinas.correlação_delta = config.correlações.delta_resinas
+
+        obj.asfaltenos.correlação_densidade = config.correlações.densidade_asfaltenos
+        obj.asfaltenos.correlação_delta = config.correlações.delta_asfaltenos
+        obj.asfaltenos.correlação_fracionamento = config.correlações.fracionamento_asfaltenos
 
         # Cálculo das propriedades dos pseudocomponentes
-        self.precipitante.calcular_propriedades(T)
-        self.saturados.calcular_propriedades(T)
-        self.aromáticos.calcular_propriedades(T)
-        self.resinas.calcular_propriedades(T)
-
-    @classmethod
-    def inicializar(cls, T, precipitante, config):
-        obj = cls()
-        obj.calcular_propriedades(T, precipitante, config)
+        obj.atualizar(params, config)
         return obj
 
-    def adicionar_asfaltenos(self, T, params_asfaltenos, config):
-        self.asfaltenos.calcular_propriedades(T, params_asfaltenos, config)
+    def atualizar(self, params, config):
+        self.precipitante.calcular_propriedades(self.T)
+        self.saturados.calcular_propriedades(self.T)
+        self.aromáticos.calcular_propriedades(self.T)
+        self.resinas.calcular_propriedades(self.T, params)
+        self.asfaltenos.calcular_propriedades(self.T, params, config)

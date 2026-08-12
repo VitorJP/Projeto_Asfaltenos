@@ -118,13 +118,23 @@ class FasesSistema:
     fase_leve: Composição = field(default_factory=Composição)
     fase_pesada: Composição = field(default_factory=Composição)
 
+    @classmethod
+    def criar(cls, ws_exp, SARA, n_dados, propriedades):
+        obj = cls()
+        fração_global = cls._a_partir_de_composição_SARA(ws_exp, SARA, propriedades)
+        obj.fase_global.definir_composições('massa', fração_global, propriedades)
+        obj.fase_leve.definir_composições('massa', np.zeros((n_dados, propriedades.n_componentes)), propriedades)
+        obj.fase_pesada.definir_composições('massa', np.zeros((n_dados, propriedades.n_componentes)), propriedades)
+        obj.betas = np.zeros(n_dados)
+        return obj
+
     @property
     def n_dados(self):
-        return 0 if self.fase_global is None else self.fase_global.xs_completo.shape[0]
+        return 0 if self.fase_global is None else self.fase_global.xs.shape[0]
 
     @property
     def n_componentes(self):
-        return 0 if self.fase_global is None else self.fase_global.xs_completo.shape[1]
+        return 0 if self.fase_global is None else self.fase_global.xs.shape[1]
 
     def validação(self):
         self.fase_global.validar()
@@ -132,7 +142,7 @@ class FasesSistema:
         self.fase_pesada.validar()
 
     @staticmethod
-    def criar_a_partir_de_composição_SARA(ws_exp, SARA, propriedades):
+    def _a_partir_de_composição_SARA(ws_exp, SARA, propriedades):
         """ Fragmenta a composição do sistema de [Solvente, Petróleo] para [Solvente, S, A, R, Asf0, Asf1, ...]
 
         Inputs:
@@ -155,16 +165,6 @@ class FasesSistema:
         ws_criado[:, 4:] = (ws_exp[:, [1]] * SARA[3] * propriedades.asfaltenos.w)  # Agregados de Asfaltenos
 
         return ws_criado
-
-    @classmethod
-    def inicializar(cls, ws_exp, SARA, n_dados, propriedades):
-        obj = cls()
-        fração_global = cls.criar_a_partir_de_composição_SARA(ws_exp, SARA, propriedades)
-        obj.fase_global.definir_composições('massa', fração_global, propriedades)
-        obj.fase_leve.definir_composições('massa', np.zeros((n_dados, propriedades.n_componentes)), propriedades)
-        obj.fase_pesada.definir_composições('massa', np.zeros((n_dados, propriedades.n_componentes)), propriedades)
-        obj.betas = np.zeros(n_dados)
-        return obj
 
     def yields_calc(self, MMs):
         # Massa molar média de cada fase (sem precipitante, apenas petróleo)

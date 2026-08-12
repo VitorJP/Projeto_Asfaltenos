@@ -239,7 +239,6 @@ def calcular_flash(ws, zs, dados_modelo_termodinâmico, tol=1e-8, n_it_max=50):
 
         ln_Ks_post = calcular_ln_coeficiente(xs_L, dados_modelo_termodinâmico) \
                      - calcular_ln_coeficiente(xs_H, dados_modelo_termodinâmico)
-        ln_Ks_post = np.clip(ln_Ks_post, None, np.log(1e6))
         Ks_post = np.where(zs == 0, 1.0, np.exp(ln_Ks_post))
         Ks_post[Ks < tol] = 0.0
 
@@ -454,7 +453,7 @@ def identificar_composição_com_G_mínimo(ws_candidatas, zs, dados_modelo_termo
 
 
 # Função
-def calcular_ELL(T, zs, propriedades):
+def calcular_ELL(zs, propriedades):
     """ Calcula o beta da proporção entre as fases e as composições das fases leve e pesada (base molar).
 
         Inputs:
@@ -487,20 +486,17 @@ def calcular_ELL(T, zs, propriedades):
     # Declaração do Dicionário do Modelo Termodinâmico
     dados_modelo_termodinamico = {
         "modelo": "Flory-Huggins",  # Escolha do Modelo
-        "parâmetros": [T, propriedades.Vs, propriedades.deltas],  # Parâmetros necessários para o Modelo escolhido
+        "parâmetros": [propriedades.T, propriedades.Vs, propriedades.deltas],  # Parâmetros necessários para o Modelo
     }
 
     chute_inicial_asfaltenico, printar = True, False
 
-    # Método de iniciação do chute inicial
-    if chute_inicial_asfaltenico:
+    if chute_inicial_asfaltenico:  # Método de iniciação do chute inicial
         ws_inicial = np.zeros(len(zs))
         ws_inicial[4:] = xsagregados
         duas_fases, beta_opt, xs_L_opt, xs_H_opt, n_iter = calcular_flash(ws_inicial, zs, dados_modelo_termodinamico)
         G_opt = calcular_Delta_G_sistema(beta_opt, xs_H_opt, xs_L_opt, zs, dados_modelo_termodinamico)
-
-    # Método do conjunto de chutes iniciais
-    else:
+    else:  # Método do conjunto de chutes iniciais
         ws_candidatas = criar_conjunto_composições_candidatas(zs, xsagregados)
         sistema_é_instável = verificação_de_instabilidade(ws_candidatas, zs, dados_modelo_termodinamico)
         if sistema_é_instável:

@@ -50,7 +50,7 @@ def deposição_cumulativa_asfaltenos():
 # ******************************************************************************************************************** #
 # INÍCIO DO TESTE
 if __name__ == "__main__":
-    from módulo_exibição_de_resultados import plotar_yield_curves_cinéticas
+    from módulo_resultados import plotar_yield_curves_cinéticas
 
     par_cin = [683.75, 0.030, 0.2801, -8.132]
     lista_t = [2, 4, 6, 8, 16, 24]
