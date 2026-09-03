@@ -18,7 +18,6 @@ from módulo_ELL import FlashELL, ModeloTermodinâmico
 # from módulo_equilíbrio_multifásico import calcular_equilíbrio_multifásico
 from módulo_cálculos_cinéticos import calcular_yields_tempo_infinito, calcular_yields_temporais, obter_ponto_de_onset
 from módulo_resultados import exibir_resultados_equilíbrio, exibir_resultados_cinética, salvar_resultados_excel
-from módulo_colormap import plotar_colormap_alfa_MWavg
 
 # ==================================================================================================================== #
 def executar_modelagem_principal(nome_planilha, diretório):
@@ -98,7 +97,6 @@ def executar_modelagem_principal(nome_planilha, diretório):
         # 3.3 - Predição do Modelo Cinético
         yields_eq_calc = calcular_yields_tempo_infinito(ws_exp[:, 0], params.cinética)
         yields_temp_calc, taus = calcular_yields_temporais(tempos, ws_exp[:, 0], yields_eq_calc, params.cinética)
-        alfa = params.equilíbrio.alfa
 
         # 3.4 - Exibição dos Resultados de Yield Curves Cinéticas
         exibir_resultados_cinética(config, nome_planilha, tempos, ws_exp[:, 0], taus, params.cinética,
