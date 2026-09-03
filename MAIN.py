@@ -19,7 +19,6 @@ from módulo_ELL import FlashELL, ModeloTermodinâmico
 from módulo_cálculos_cinéticos import calcular_yields_tempo_infinito, calcular_yields_temporais, obter_ponto_de_onset
 from módulo_resultados import exibir_resultados_equilíbrio, exibir_resultados_cinética, salvar_resultados_excel
 
-
 # ==================================================================================================================== #
 def executar_modelagem_principal(nome_planilha, diretório):
     # ================================================================================================================ #

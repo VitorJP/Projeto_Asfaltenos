@@ -27,6 +27,9 @@ def calcular_por_Distribuição_Gamma(alfa, MWavg, n_agregados, MWmin, MWmax, ti
            wsagregados (array)  : frações mássicas dos agregados de asfaltenos
            xsagregados (array)  : frações molares dos agregados de asfaltenos
     """
+    #prints debug ===================
+    #print(f"[DIST] alfa={alfa}, MW_avg={MWavg}, n={n_agregados}, min={MW_min}, max={MW_max}, tipo={tipo_calculo}")
+    # ===================================
 
     # Função FDP_Gamma
     def f(MWi):
@@ -58,6 +61,11 @@ def calcular_por_Distribuição_Gamma(alfa, MWavg, n_agregados, MWmin, MWmax, ti
     wsagregados = xsagregados * MMsagregados / ((xsagregados * MMsagregados).sum())
     xsagregados, wsagregados = normalizar_composição(xsagregados), normalizar_composição(wsagregados)
     wsagregados_cumulativa = np.cumsum(wsagregados)
+
+    #prints debug =======================
+    #print(f"[DIST] MM (primeiros 5) = {MM[:5]}")
+    #print(f"[DIST] x  (primeiros 5) = {x[:5]}")
+    #==========================================
 
     return MMsagregados, xsagregados, wsagregados, wsagregados_cumulativa
 

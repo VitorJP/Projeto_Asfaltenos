@@ -58,7 +58,7 @@ class CorrelaçõesConfigurações(BaseConfigurações):
 @dataclass
 class CálculosConfigurações(BaseConfigurações):
     # Relacionados à regressão dos parâmetros
-    tipo_cálculo_equilíbrio: str = field(default='regressão',
+    tipo_cálculo_equilíbrio: str = field(default='predição',
                                          metadata={'opções': ['regressão', 'predição']})
     tipo_cálculo_cinética: str = field(default='não',
                                        metadata={'opções': ['não', 'regressão', 'predição']})

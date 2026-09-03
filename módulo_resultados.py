@@ -69,7 +69,7 @@ def exibir_resultados_cinética(config, nome_planilha, tempos, ws_precipitante, 
 # Subfunção
 def referencial_para_yield_curves(x_yield_curve, propriedades, fase_global, fase_leve):
     if x_yield_curve == 'solubilidade':
-        phis_L = converter_fração_molar_para_fração_volumétrica(fase_leve.xs_completo, propriedades.Vs)
+        phis_L = fase_leve.phis
         deltas_L = (1/1000) * ((phis_L * propriedades.deltas[None, :] ** 2).sum(axis=1)) ** 0.5  # MPa**0.5
         return deltas_L, "Parâmetro de Solubilidade (MPa$^{0.5}$)"
     else:
@@ -193,6 +193,7 @@ def plotar_yield_curves(x_valores, y_valores_exp, y_valores_calc, y_valores_max,
     diretório_da_pasta_deste_modulo = os.path.dirname(os.path.abspath(__file__))
     diretório_png = os.path.join(diretório_da_pasta_deste_modulo, "Resultados", "Resultados_Equilíbrio",
                                  cálculo.tipo_cálculo_equilíbrio, nome_arquivo_gráfico)
+    os.makedirs(os.path.dirname(diretório_png), exist_ok=True)
     plt.savefig(diretório_png, dpi=300, bbox_inches="tight")
 
     # Fechando o arquivo após salvá-lo
@@ -254,6 +255,7 @@ def plotar_distribuição_massa_molar(asfaltenos, params, informações_auxiliar
     diretório_da_pasta_deste_modulo = os.path.dirname(os.path.abspath(__file__))
     diretório_png = os.path.join(diretório_da_pasta_deste_modulo, "Resultados", "Distribuição Massa Molar",
                                  cálculo.tipo_cálculo_equilíbrio, nome_arquivo_gráfico)
+    os.makedirs(os.path.dirname(diretório_png), exist_ok=True)
     plt.savefig(diretório_png, dpi=300, bbox_inches="tight")
 
     # Fechando o arquivo após salvá-lo
@@ -325,6 +327,7 @@ def plotar_yield_curves_cinéticas(x_valores, ts, y_valores_eq, y_valores_exp, y
     diretório_da_pasta_deste_modulo = os.path.dirname(os.path.abspath(__file__))
     diretório_png = os.path.join(diretório_da_pasta_deste_modulo, "Resultados", "Resultados_Cinética",
                                  tipo_cálculo, nome_arquivo_gráfico)
+    os.makedirs(os.path.dirname(diretório_png), exist_ok=True)
     plt.savefig(diretório_png, dpi=300, bbox_inches="tight")
 
     # Fechando o arquivo após salvá-lo
