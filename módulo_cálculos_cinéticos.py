@@ -4,7 +4,7 @@ import scipy as scp
 from scipy.constants import R  # m3*Pa/mol*K
 from dataclasses import dataclass
 
-@dataclass #onset, yield_max, kc1, kc2, kt1, kt2
+@dataclass
 class parâmetros_precipitação:
 
     onset: float
@@ -56,6 +56,26 @@ class cálculos_físicos:
 def deposição_cumulativa_asfaltenos():
     pass
 
+# ********************************************************************************
+# FUNÇÕES WRAPPER PARA CÁLCULOS CINÉTICOS *************************************
+
+# Funções wrapper para compatibilidade com importações
+def calcular_yields_tempo_infinito(xs_precipitante, modelo):
+    return modelo.calcular_yields_tempo_infinito(xs_precipitante)
+
+def calcular_yields_temporais(tempos, xs_precipitante, yields_tempo_infinito, modelo):
+    return modelo.calcular_yields_temporais(tempos, xs_precipitante, yields_tempo_infinito)
+
+def obter_ponto_de_onset(xs_precipitante, yield_curve, tol=0.001, modelo=None):
+    if modelo:
+        return modelo.obter_ponto_de_onset(xs_precipitante, yield_curve, tol)
+    # Implementação padrão se não houver modelo
+    onset = 0
+    for i_onset in range(len(yield_curve)):
+        if yield_curve[i_onset] > tol:
+            onset = xs_precipitante[i_onset] if i_onset == 0 else xs_precipitante[i_onset - 1]
+            break
+    return onset
 # ******************************************************************************************************************** #
 #  ATENÇÃO: O CÓDIGO A SEGUIR SERÁ EXECUTADO APENAS QUANDO ESTE MÓDULO FOR RODADO COMO SCRIPT PRINCIPAL.               #
 #           O CÓDIGO A SEGUIR SERVE PARA CONFERIR SE AS FUNÇÕES DESTE MÓDULO FUNCIONAM CORRETAMENTE.                   #
